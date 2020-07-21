@@ -1,0 +1,114 @@
+EC2上にDockerでWordpressを構築しました
+
+今回このブログを作成するのに下のような構成で作りました。
+
+画像に alt 属性が指定されていません。ファイル名: blog-1-1.png
+その中でも今回はEC2の中に、Dockerを入れてWordpressを立ち上げました。
+
+Dockerを扱うのは初めてで、分からない言葉が多かったです。
+
+今回Dockerに関して調べる中で、重要だと思ったことをまとめました。
+
+続きを読む
+🔗Dockerとは
+<p>Dockerについては長くなるので<a href="https://qiita.com/bremen/items/4604f530fe25786240db" target="_blank" rel="noopener noreferrer">この記事</a>を参考にして頂けたらと思います。</p>
+🔗Dockerに出てくる用語
+container: Docker上で作業をする場所
+
+image: containerを作るためのファイル一式が入ったもの
+
+hub: レジストリといわれる自分が作成したcontainerをimageにして公開する場所
+またcontainerを立ち上げるときにimageがなければhubからダウンロードしてくる
+
+dockerfile: imageをそのまま使うのではなく、必要なパッケージやアプリを足してカスタマイズしたもの
+ファイル内にはyum install httpd 等書きます
+
+compose: 複数のcontainerを実行する手順を自動化する
+ファイル内にはcontainerの情報を書きます
+
+kubernetes: container群を統合管理するためのオープンソースのソフトウェア
+containerを何十も保有しているとkubernetesの効果が役立つようです
+
+画像に alt 属性が指定されていません。ファイル名: blog2-1-1024x483.png
+🔗AWSに出てくるDockerサービス
+ECR: 作成したimageを保存する場所。hubと同じレジストリの一つ
+
+EKS: AWSでkubernetesを使用するためのサービス
+
+FARGATE: スケーリング、パッチ適用等、containerよりも下の部分を管理してくれる
+
+ECS: EKS,ECR,FARGATEを利用するためのサービス
+
+画像に alt 属性が指定されていません。ファイル名: blog3-2-1024x478.png
+🔗Dockerコマンド一覧
+docker container: 起動中のcontainerを表示する
+
+docker ps: 起動中のcontainerを表示する
+
+docker images: image一覧を表示
+
+docker rm: 停止中のcontainerを削除する
+
+docker start: containerを開始する
+
+docker stop: containerを停止する
+
+docker exec: container内に入る
+
+🔗Wordpressの設定
+sudo su
+<!-- Dockerをインストールする -->
+yum install -y docker
+<!-- Docker composeをインストールする -->
+curl -L "https://github.com/docker/compose/releases/download/1.8.1/docker-compose-$(uname -s)-$(uname -m)" > /usr/local/bin/docker-compose
+<!-- Dockerの中でsudoの様な働きをするコマンドになります -->
+chmod +x /usr/local/bin/docker-compose
+<!-- docker-compose.ymlファイルを作成する -->
+cat <<EOF > docker-compose.yml
+version: '2'
+
+services:
+   db:
+     image: mysql:5.7
+     volumes:
+       - "./.data/db:/var/lib/mysql"
+     restart: always
+     environment:
+       MYSQL_ROOT_PASSWORD: wordpress
+       MYSQL_DATABASE: wordpress
+       MYSQL_USER: wordpress
+       MYSQL_PASSWORD: wordpress
+
+   wordpress:
+     depends_on:
+       - db
+     image: wordpress:latest
+     links:
+       - db
+     ports:
+       - "80:80"
+     restart: always
+     environment:
+       WORDPRESS_DB_HOST: db:3306
+       WORDPRESS_DB_PASSWORD: wordpress
+EOF
+<!-- Dockerを起動させる -->
+service docker start
+<!-- Docker composeを起動させる -->
+/usr/local/bin/docker-compose up -d
+
+- Lang Select -
+data-line属性値
+ファイル名
+以上でWordpressは起動しているので、EC2のIPアドレス:80/でログインできます。
+
+コマンド説明少しだけしたので参考にしてください。
+
+
+まとめ
+いかがでしたでしょうか？
+
+皆様のdockerに対しての知識が少しでも増えたなら良かったです。
+
+また、間違えている所があればコメント頂けたら嬉しいです。
+
