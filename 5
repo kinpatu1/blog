@@ -1,0 +1,164 @@
+このブログを自動停止、自動起動する様に設定しました
+
+AWSのサービスには１年間の無料利用枠があり、EC2の無料利用枠は750 時間/月です。
+
+1台のEC2を30日利用すると、720時間/月になるので一台以上利用する場合は、すぐに無料利用枠を超えてしまいます。
+
+なので、以下の様なAWSサービスを使って、自動停止、自動起動の設定を行いました。
+
+画像に alt 属性が指定されていません。ファイル名: Untitled-Diagram-1-1.png
+続きを読む
+事前準備
+まずは前回の<a href="https://aws.miki0116.com/2020/07/01/docker/">記事</a>を見て、Docker上にWordpressを立ち上げて、以下の様な構成を作ってください。
+画像に alt 属性が指定されていません。ファイル名: Untitled-Diagram-5.png
+EC2の自動起動
+EC2が１時になると停止し、６時になると再起動する様に設定します。
+
+IAM ロールの作成
+今回はLambdaを用いてEC2の自動停止、自動起動の設定を行います。
+
+LambdaがEC2にアクセスできる様にするIAMロールを作成します。
+
+ロールを作成する時のユースケースの選択では、Lambdaを選択しポリシーには以下JSONを記入します。
+
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "logs:CreateLogGroup",
+        "logs:CreateLogStream",
+        "logs:PutLogEvents"
+      ],
+      "Resource": "arn:aws:logs:*:*:*"
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "ec2:Start*",
+        "ec2:Stop*"
+      ],
+      "Resource": "*"
+    }
+  ]
+}
+
+- Lang Select -
+data-line属性値
+ファイル名
+画像に alt 属性が指定されていません。ファイル名: スクリーンショット-2020-07-20-21.13.44-1024x640.png
+画像に alt 属性が指定されていません。ファイル名: スクリーンショット-2020-07-20-21.15.13-1024x640.png
+画像に alt 属性が指定されていません。ファイル名: スクリーンショット-2020-07-20-21.16.41-1024x640.png
+画像に alt 属性が指定されていません。ファイル名: スクリーンショット-2020-07-20-21.18.09-1024x640.png
+画像に alt 属性が指定されていません。ファイル名: スクリーンショット-2020-07-20-21.19.18-1024x640.png
+画像に alt 属性が指定されていません。ファイル名: スクリーンショット-2020-07-20-21.20.28-1024x640.png
+画像に alt 属性が指定されていません。ファイル名: スクリーンショット-2020-07-20-21.21.33-1024x640.png
+画像に alt 属性が指定されていません。ファイル名: スクリーンショット-2020-07-20-21.22.12-1024x640.png
+Lambdaの設定
+EC2を停止、再起動する２つのLambdaを作成します。
+
+EC2を停止するLambda
+Lambda名には「StopEC2Instances」、ランタイムには「Python 3.7」、アクセス権限で先ほど作成したIAMロールを選択します。
+
+Lambdaのコードには以下内容を記入します。
+
+import boto3
+region = 'リージョンID(東京リージョンならap-northeast-1）'
+instances = ['インスタンスID（例: i-12345cb6de4f78g9h）']
+ec2 = boto3.client('ec2', region_name=region)
+
+def lambda_handler(event, context):
+    ec2.stop_instances(InstanceIds=instances)
+    print('stopped your instances: ' + str(instances))
+
+- Lang Select -
+data-line属性値
+ファイル名
+「Basic settings」でLambda で関数が停止するまでに、許可される実行時間を１０秒に設定します。
+
+画像に alt 属性が指定されていません。ファイル名: スクリーンショット-2020-07-20-21.36.08-1024x640.png
+画像に alt 属性が指定されていません。ファイル名: スクリーンショット-2020-07-20-21.37.36-1024x640.png
+画像に alt 属性が指定されていません。ファイル名: スクリーンショット-2020-07-20-21.43.08-1024x640.png
+画像に alt 属性が指定されていません。ファイル名: スクリーンショット-2020-07-20-21.44.11-1024x640.png
+画像に alt 属性が指定されていません。ファイル名: スクリーンショット-2020-07-20-21.44.40-1024x640.png
+EC2を再起動するLambda
+Lambda名には「StartEC2Instances」、ランタイムには「Python 3.7」、アクセス権限で先ほど作成したIAMロールを選択します。
+
+Lambdaのコードには以下内容を記入します。
+
+import boto3
+region = 'リージョンID(東京リージョンならap-northeast-1）'
+instances = ['インスタンスID（例: i-12345cb6de4f78g9h）']
+ec2 = boto3.client('ec2', region_name=region)
+
+def lambda_handler(event, context):
+    ec2.start_instances(InstanceIds=instances)
+    print('started your instances: ' + str(instances))
+
+- Lang Select -
+data-line属性値
+ファイル名
+「Basic settings」でLambda で関数が停止するまでに、許可される実行時間を１０秒に設定します。
+
+CloudWatchの設定
+Lambdaを決まった時間に動かす設定を行います。
+
+StopEC2Instancesを起動させる設定をします
+「ルール」を選択し「ルールの作成」を選択します。
+
+「スケジュール」でLambdaを起動させる時間を設定します。
+
+今回は「Cron 式」で設定を行います。
+
+Cron 式の書き方、またCron 式はUTCを採用しているので参考にしてください。
+
+﻿
+
+「ターゲットの追加」で、Lambdaの「StopEC2Instances」を選択します。
+
+画像に alt 属性が指定されていません。ファイル名: スクリーンショット-2020-07-20-21.52.30-1024x640.png
+画像に alt 属性が指定されていません。ファイル名: スクリーンショット-2020-07-20-21.53.33-1024x640.png
+画像に alt 属性が指定されていません。ファイル名: スクリーンショット-2020-07-20-21.55.03-1024x640.png
+StartEC2Instancesを起動させる設定をします
+「ルール」を選択し「ルールの作成」を選択します。
+
+「スケジュール」でLambdaを起動させる時間を設定します。
+
+今回は「Cron 式」で設定を行います。
+
+Cron 式の<a href="https://docs.aws.amazon.com/AmazonCloudWatch/latest/events/ScheduledEvents.html">書き方</a>、またCron 式は<a href="https://www.jisakeisan.com/?t1=utc&amp;t2=jst">UTC</a>を採用しているので参考にしてください。
+﻿
+
+「ターゲットの追加」で、Lambdaの「StartEC2Instances」を選択します。
+
+確認
+以上で設定した時間に、EC2が時間通りに停止、再起動しています。
+
+EC2のモニタリングで、直近２４時間の「CPU使用率」が、停止してから再起動するまでの時間だけ、0になっているのが確認できます。
+
+画像に alt 属性が指定されていません。ファイル名: スクリーンショット-2020-07-21-0.07.42-1024x640.png
+Dockerの自動起動
+初期設定ではEC2を停止すると、Dockerも停止してしまい、EC2を再起動しても、Dockerは再起動しないです。
+
+なのでEC2を再起動した時に、Dockerも再起動する様に設定します。
+
+EC2にSSH接続して以下コードを打ちます。
+
+<!-- Dockerが起動していることを確認します。 -->
+sudo service docker status
+<!-- dockerが停止していたら起動させます -->
+sudo service docker start
+<!-- Dockerを自動起動させる設定を行います -->
+sudo systemctl enable docker
+
+
+- Lang Select -
+data-line属性値
+ファイル名
+画像に alt 属性が指定されていません。ファイル名: スクリーンショット-2020-07-20-22.14.09-1024x640.png
+まとめ
+今回の記事を通して、Cloud Watchに関する知識が少し着いたので良かったです。
+
+またこの自動起動の設定は、とても便利だと思うので皆さんも使って頂けたら嬉しいです。
+
