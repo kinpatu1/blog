@@ -1,0 +1,319 @@
+CloudFormationのテンプレートを簡単に作成する方法
+
+これまでの記事でVPC、EC2の作成はすぐにできる様になりました。
+
+慣れてくると同じことをするのが面倒になってきます。
+
+そこでボタン一つでネットワーク構成を作成、削除できるサービスであるCloudFormationについて学習しました。
+
+続きを読む
+🔗CloudFormation
+作成したいインフラ構成を、JSONまたはYAMLのテキストファイル形式で記述します。
+
+そのテキストファイルをAWSにあげるだけで、インフラを構築することができます。
+
+🔗Former2
+既存のインフラ構成から、テキストファイルを作成することができます。
+
+🔗Former2アカウントの作成
+こちらにログインします。
+
+ブラウザに対応したFormer2 Helperをインストールします。
+
+画像に alt 属性が指定されていません。ファイル名: 1-1024x561.png
+「Chromeに追加」をクリックします。
+
+画像に alt 属性が指定されていません。ファイル名: 2-1024x564.png
+利用しているAWSユーザーの「アクセスキーID」、「シークレットアクセスキー」を入力します。
+
+画像に alt 属性が指定されていません。ファイル名: 3-1024x563.png
+「アクセスキーID」、「シークレットアクセスキー」はIAMユーザーダッシュボードで、確認することができます。
+
+「IAMダッシュボード」>「ユーザー」>「現在利用しているユーザー名」の順でクリックします。
+
+画像に alt 属性が指定されていません。ファイル名: 4-1024x530.png
+「アクセスキーの作成」をクリックします。
+
+画像に alt 属性が指定されていません。ファイル名: 5-1024x559.png
+以下内容をコピーするか、これからもこのアクセスキーを利用するなら、CSVファイルをダウンロードしておきます。
+
+この内容を「資格内容」画面に入力します。
+
+画像に alt 属性が指定されていません。ファイル名: 6-1024x529.png
+「Related Resources」の設定だけ追加で設定しておきます。
+
+こうすることで、リソースを作成するのに必要なリソースを教えてくれます。
+
+画像に alt 属性が指定されていません。ファイル名: 7-1024x561.png
+以上で、Former2の設定は終わりです。
+
+🔗VPC作成
+🔗事前準備
+VPC、Subnetの作成記事を見て以下構成を作ってください。
+
+画像に alt 属性が指定されていません。ファイル名: Untitled-Diagram.png
+🔗テンプレート作成
+作成したAWSリソースをFormer2に読み込ませます。
+
+以下、ページでAWSリソースを作成したリージョンを選択し、「Scan Again」をクリックします。
+
+画像に alt 属性が指定されていません。ファイル名: スクリーンショット-2020-08-16-17.31.32-1024x540.png
+「Networking & Content Delivery」>「VPC」をクリックします。
+
+画像に alt 属性が指定されていません。ファイル名: スクリーンショット-2020-08-16-17.35.05-1024x563.png
+「VPC」>「VPCs」>「Add Selected」をクリックすると、VPCを作成するのに必要なリソースを教えてくれます。
+
+画像に alt 属性が指定されていません。ファイル名: スクリーンショット-2020-08-16-17.38.23-1024x551.png
+同じことを「Subnets」、「Internet Gateways」、「DHCP Options」、「Network ACLs」に対してします。
+
+「EC2Subnet」、「EC2NetworkAcl」、「EC2SecurityGroup」、「EC2DHCPOptions」にはNameタグがついていないので、以下の様に「Tags」を付けます。
+
+インテントは揃えてください。
+
+    EC2Subnet:
+        Type: "AWS::EC2::Subnet"
+        Properties:
+            AvailabilityZone: !GetAtt EC2Subnet3.AvailabilityZone
+            CidrBlock: "10.0.10.0/24"
+            VpcId: !Ref EC2VPC
+            MapPublicIpOnLaunch: false
+            Tags: 
+              - 
+                Key: "Name"
+                Value: "blog"
+
+- Lang Select -
+data-line属性値
+ファイル名
+「Import」はできない様なので、新しくymlファイルを作成し貼り付けます。
+
+CloudFormationダッシュボードから「スタックの作成」>「新しいリソースを使用（標準）をクリックします。
+
+画像に alt 属性が指定されていません。ファイル名: スクリーンショット-2020-08-16-18.12.24-1024x205.png
+「テンプレートファイルのアップロード」>「ファイルの選択」をクリックし、作成したymlファイルを選びます。
+
+画像に alt 属性が指定されていません。ファイル名: スクリーンショット-2020-08-16-18.15.28-1024x559.png
+その後の画面では特に設定しなくても大丈夫です。
+
+デフォルトのセキュリティグループが既にあるというエラーがでます。
+
+画像に alt 属性が指定されていません。ファイル名: スクリーンショット-2020-08-16-18.20.37-1024x563.png
+なので、テンプレートから「EC2SecurityGroup」を削除します。
+
+アップロードに失敗したスタックを削除し、新しいスタックを作成します。
+
+画像に alt 属性が指定されていません。ファイル名: スクリーンショット-2020-08-16-18.23.05-1024x562.png
+以下画面になるとスタックの作成は完成ですので、VPCダッシュボードで作成したリソースを確認してください。
+
+画像に alt 属性が指定されていません。ファイル名: スクリーンショット-2020-08-16-18.28.01-1024x563.png
+　
+
+🔗完成形
+AWSTemplateFormatVersion: "2010-09-09"
+Metadata:
+    Generator: "former2"
+Description: ""
+Resources:
+    EC2VPC:
+        Type: "AWS::EC2::VPC"
+        Properties:
+            CidrBlock: "10.0.0.0/16"
+            EnableDnsSupport: true
+            EnableDnsHostnames: false
+            InstanceTenancy: "default"
+            Tags: 
+              - 
+                Key: "Name"
+                Value: "blog"
+
+    EC2Subnet:
+        Type: "AWS::EC2::Subnet"
+        Properties:
+            AvailabilityZone: !GetAtt EC2Subnet3.AvailabilityZone
+            CidrBlock: "10.0.10.0/24"
+            VpcId: !Ref EC2VPC
+            MapPublicIpOnLaunch: false
+            Tags: 
+              - 
+                Key: "Name"
+                Value: "blog"
+
+    EC2Subnet2:
+        Type: "AWS::EC2::Subnet"
+        Properties:
+            AvailabilityZone: !GetAtt EC2Subnet4.AvailabilityZone
+            CidrBlock: "10.0.20.0/24"
+            VpcId: !Ref EC2VPC
+            MapPublicIpOnLaunch: false
+            Tags: 
+              - 
+                Key: "Name"
+                Value: "blog"
+
+    EC2Subnet3:
+        Type: "AWS::EC2::Subnet"
+        Properties:
+            AvailabilityZone: !Sub "${AWS::Region}a"
+            CidrBlock: "10.0.1.0/24"
+            VpcId: !Ref EC2VPC
+            MapPublicIpOnLaunch: false
+            Tags: 
+              - 
+                Key: "Name"
+                Value: "blog"
+
+    EC2Subnet4:
+        Type: "AWS::EC2::Subnet"
+        Properties:
+            AvailabilityZone: !Sub "${AWS::Region}b"
+            CidrBlock: "10.0.2.0/24"
+            VpcId: !Ref EC2VPC
+            MapPublicIpOnLaunch: false
+            Tags: 
+              - 
+                Key: "Name"
+                Value: "blog"
+
+    EC2NetworkAcl:
+        Type: "AWS::EC2::NetworkAcl"
+        Properties:
+            VpcId: !Ref EC2VPC
+            Tags: 
+              - 
+                Key: "Name"
+                Value: "blog"
+
+    EC2RouteTable:
+        Type: "AWS::EC2::RouteTable"
+        Properties:
+            VpcId: !Ref EC2VPC
+            Tags: 
+              - 
+                Key: "Name"
+                Value: "private"
+
+    EC2RouteTable2:
+        Type: "AWS::EC2::RouteTable"
+        Properties:
+            VpcId: !Ref EC2VPC
+            Tags: 
+              - 
+                Key: "Name"
+                Value: "public"
+
+    EC2VPCDHCPOptionsAssociation:
+        Type: "AWS::EC2::VPCDHCPOptionsAssociation"
+        Properties:
+            DhcpOptionsId: !Ref EC2DHCPOptions
+            VpcId: !Ref EC2VPC
+
+    EC2VPCGatewayAttachment:
+        Type: "AWS::EC2::VPCGatewayAttachment"
+        Properties:
+            InternetGatewayId: !Ref EC2InternetGateway
+            VpcId: !Ref EC2VPC
+
+    EC2SubnetNetworkAclAssociation:
+        Type: "AWS::EC2::SubnetNetworkAclAssociation"
+        Properties:
+            SubnetId: !Ref EC2Subnet4
+            NetworkAclId: !Ref EC2NetworkAcl
+
+    EC2SubnetNetworkAclAssociation2:
+        Type: "AWS::EC2::SubnetNetworkAclAssociation"
+        Properties:
+            SubnetId: !Ref EC2Subnet3
+            NetworkAclId: !Ref EC2NetworkAcl
+
+    EC2SubnetNetworkAclAssociation3:
+        Type: "AWS::EC2::SubnetNetworkAclAssociation"
+        Properties:
+            SubnetId: !Ref EC2Subnet
+            NetworkAclId: !Ref EC2NetworkAcl
+
+    EC2SubnetNetworkAclAssociation4:
+        Type: "AWS::EC2::SubnetNetworkAclAssociation"
+        Properties:
+            SubnetId: !Ref EC2Subnet2
+            NetworkAclId: !Ref EC2NetworkAcl
+
+    EC2SubnetRouteTableAssociation:
+        Type: "AWS::EC2::SubnetRouteTableAssociation"
+        Properties:
+            RouteTableId: !Ref EC2RouteTable
+            SubnetId: !Ref EC2Subnet
+
+    EC2SubnetRouteTableAssociation2:
+        Type: "AWS::EC2::SubnetRouteTableAssociation"
+        Properties:
+            RouteTableId: !Ref EC2RouteTable
+            SubnetId: !Ref EC2Subnet2
+
+    EC2SubnetRouteTableAssociation3:
+        Type: "AWS::EC2::SubnetRouteTableAssociation"
+        Properties:
+            RouteTableId: !Ref EC2RouteTable2
+            SubnetId: !Ref EC2Subnet3
+
+    EC2SubnetRouteTableAssociation4:
+        Type: "AWS::EC2::SubnetRouteTableAssociation"
+        Properties:
+            RouteTableId: !Ref EC2RouteTable2
+            SubnetId: !Ref EC2Subnet4
+
+    EC2InternetGateway:
+        Type: "AWS::EC2::InternetGateway"
+        Properties:
+            Tags: 
+              - 
+                Key: "Name"
+                Value: "blog"
+
+    EC2Route:
+        Type: "AWS::EC2::Route"
+        Properties:
+            DestinationCidrBlock: "0.0.0.0/0"
+            GatewayId: !Ref EC2InternetGateway
+            RouteTableId: !Ref EC2RouteTable2
+
+    EC2DHCPOptions:
+        Type: "AWS::EC2::DHCPOptions"
+        Properties:
+            DomainName: "ec2.internal"
+            Tags: 
+              - 
+                Key: "Name"
+                Value: "blog"
+
+    EC2NetworkAclEntry:
+        Type: "AWS::EC2::NetworkAclEntry"
+        Properties:
+            CidrBlock: "0.0.0.0/0"
+            Egress: true
+            NetworkAclId: !Ref EC2NetworkAcl
+            Protocol: -1
+            RuleAction: "allow"
+            RuleNumber: 100
+
+    EC2NetworkAclEntry2:
+        Type: "AWS::EC2::NetworkAclEntry"
+        Properties:
+            CidrBlock: "0.0.0.0/0"
+            Egress: false
+            NetworkAclId: !Ref EC2NetworkAcl
+            Protocol: -1
+            RuleAction: "allow"
+            RuleNumber: 100
+
+
+
+- Lang Select -
+data-line属性値
+ファイル名
+料金表
+画像に alt 属性が指定されていません。ファイル名: Untitled-Diagram-7.png
+まとめ
+今回はCloudFormationの操作をざっと書きました。
+
+次回以降でCloudFormationを扱う上で、出てくる用語の設定や便利機能についてまとめていきます。
+
