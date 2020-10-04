@@ -1,0 +1,67 @@
+Route53+CloudFront+S3で静的WebサイトへHTTPS通信した
+
+
+静的Webサイトの作成方法は紹介しましたが、これをSSL証明書を利用して、HTTPS接続できる様にしました。
+
+
+目次 [非表示]
+
+1 🔗事前準備
+2 🔗CloudFrontについて
+3 🔗CloudFrontの設定
+4 料金表
+5 まとめ
+🔗事前準備
+以下構成を作成するために3つの準備をしてください。
+
+1.Route53でサブドメインの作成
+
+2.サブドメインと同じ名前のS3バケットの作成、「maintenance.html」オブジェクトの作成 
+
+3.Certificate Managerで証明書の発行
+
+
+🔗CloudFrontについて
+CloudFrontはS3、ALB、EC2などのAWSサービスとユーザとの間に置くことで、ユーザに届けたいコンテンツ（画像、動画、HTMLファイル等）を高速に届けることができるサービスです。
+
+また、AWSリソースのAWS ShieldやSSL 証明書を利用することで、ユーザとコンテンツとの間の通信を保護することができます。
+
+🔗CloudFrontの設定
+CloudFrontのダッシュボードで「Create Distribution」を選択します。
+
+
+「Web」で「Get　Started」を選択します。
+
+
+Origin Domain Name: 作成したS3を選択する
+
+Restrict Bucket Access: Yes
+
+Origin Access Identity: Create a New Identity
+
+Grant Read Permissions on Bucket: Yes, Update Bucket Policy
+
+
+Alternate Domain Names(CNAMEs): S3のバケット名
+
+Custom SSL Certificate (example.com): チェックを入れて作成した証明書を選択する
+
+
+Default Root Object: S3のバケット「test.miki0116.com」にあるオブジェクト「maintenance.html」を選択する。
+
+
+しばらくすると「Deployed」に変わります。
+
+
+「値/トラフィックのルーティング先」でCloudFrontを選択します。
+
+
+これでRoute53に登録した「https://サブドメイン」をブラウザに入力すると以下の様に保護されているのが確認できます。
+
+
+
+料金表
+
+まとめ
+今回はHTTPS対応するための必要最低限のことしか書きませんでしたが、また他の機能についても勉強しようかと思います。
+
