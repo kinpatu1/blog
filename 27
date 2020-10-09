@@ -1,0 +1,493 @@
+CloudFormationのテンプレートをネットワーク部とアプリケーション部に分けた
+
+現在、以前紹介したCloudFormationのテンプレートで、以下の様な構成を良く作成しています。
+
+このテンプレートをネットワーク部とアプリケーション部に分割する方法を見つけたので試してみました。
+
+画像に alt 属性が指定されていません。ファイル名: Untitled-Diagram-2-1.png
+続きを読む
+🔗分割前のテンプレート
+上記構成を作成するのに以下の様なテンプレートを利用しました。
+
+AMI、pemキーはその人によって変わるので、各自調べてください。
+
+AMIに関してはこちらを、pemキーに関してはこちらを参考に調べてください。
+
+AWSTemplateFormatVersion: "2010-09-09"
+Metadata:
+    Generator: "former2"
+Description: ""
+Resources:
+    EC2VPC:
+        Type: "AWS::EC2::VPC"
+        Properties:
+            CidrBlock: "10.0.0.0/16"
+            EnableDnsSupport: true
+            EnableDnsHostnames: true
+            InstanceTenancy: "default"
+            Tags: 
+              - 
+                Key: "Name"
+                Value: "CloudFormation"
+
+    EC2Subnet:
+        Type: "AWS::EC2::Subnet"
+        Properties:
+            AvailabilityZone: !Sub "${AWS::Region}a"
+            CidrBlock: "10.0.1.0/24"
+            VpcId: !Ref EC2VPC
+            MapPublicIpOnLaunch: false
+            Tags: 
+              - 
+                Key: "Name"
+                Value: "CloudFormation"
+
+    EC2InternetGateway:
+        Type: "AWS::EC2::InternetGateway"
+        Properties:
+            Tags: 
+              - 
+                Key: "Name"
+                Value: "CloudFormation"
+
+    EC2DHCPOptions:
+        Type: "AWS::EC2::DHCPOptions"
+        Properties:
+            DomainName: !Sub "${AWS::Region}.compute.internal"
+            Tags: 
+              - 
+                Key: "Name"
+                Value: "CloudFormation"
+
+    EC2VPCDHCPOptionsAssociation:
+        Type: "AWS::EC2::VPCDHCPOptionsAssociation"
+        Properties:
+            DhcpOptionsId: !Ref EC2DHCPOptions
+            VpcId: !Ref EC2VPC
+
+    EC2NetworkAcl:
+        Type: "AWS::EC2::NetworkAcl"
+        Properties:
+            VpcId: !Ref EC2VPC
+            Tags: 
+              - 
+                Key: "Name"
+                Value: "CloudFormation"
+
+    EC2NetworkAclEntry:
+        Type: "AWS::EC2::NetworkAclEntry"
+        Properties:
+            CidrBlock: "0.0.0.0/0"
+            Egress: true
+            NetworkAclId: !Ref EC2NetworkAcl
+            Protocol: -1
+            RuleAction: "allow"
+            RuleNumber: 100
+
+    EC2NetworkAclEntry2:
+        Type: "AWS::EC2::NetworkAclEntry"
+        Properties:
+            CidrBlock: "0.0.0.0/0"
+            Egress: false
+            NetworkAclId: !Ref EC2NetworkAcl
+            Protocol: -1
+            RuleAction: "allow"
+            RuleNumber: 100
+
+    EC2RouteTable:
+        Type: "AWS::EC2::RouteTable"
+        Properties:
+            VpcId: !Ref EC2VPC
+            Tags: 
+              - 
+                Key: "Name"
+                Value: "CloudFormation"
+
+    EC2Route:
+        Type: "AWS::EC2::Route"
+        Properties:
+            DestinationCidrBlock: "0.0.0.0/0"
+            GatewayId: !Ref EC2InternetGateway
+            RouteTableId: !Ref EC2RouteTable
+
+    EC2VPCGatewayAttachment:
+        Type: "AWS::EC2::VPCGatewayAttachment"
+        Properties:
+            InternetGatewayId: !Ref EC2InternetGateway
+            VpcId: !Ref EC2VPC
+
+    EC2SubnetNetworkAclAssociation:
+        Type: "AWS::EC2::SubnetNetworkAclAssociation"
+        Properties:
+            SubnetId: !Ref EC2Subnet
+            NetworkAclId: !Ref EC2NetworkAcl
+
+    EC2SubnetRouteTableAssociation:
+        Type: "AWS::EC2::SubnetRouteTableAssociation"
+        Properties:
+            RouteTableId: !Ref EC2RouteTable
+            SubnetId: !Ref EC2Subnet
+
+    EC2Instance:
+        Type: "AWS::EC2::Instance"
+        Properties:
+            ImageId: 「自分が保有しているAMI、またはインスタンス作成時のAMIID」
+            InstanceType: "t2.micro"
+            KeyName: 「自分が保有しているpemキーの名前」
+            AvailabilityZone: !Sub "${AWS::Region}a"
+            EbsOptimized: false
+            HibernationOptions: 
+                Configured: false
+            NetworkInterfaces:
+              - AssociatePublicIpAddress: "true"
+                DeviceIndex: "0"
+                SubnetId: !Ref EC2Subnet
+                GroupSet:
+                 - !Ref EC2SecurityGroup
+            Tags: 
+              - 
+                Key: "Name"
+                Value: "CloudFormation"
+            
+
+    EC2NetworkInterface:
+        Type: "AWS::EC2::NetworkInterface"
+        Properties:
+            Description: "Primary network interface"
+            SubnetId: !Ref EC2Subnet
+            SourceDestCheck: true
+            GroupSet: 
+              - !Ref EC2SecurityGroup
+            Tags: 
+              - 
+                Key: "Name"
+                Value: "CloudFormation"
+
+    EC2EIP:
+        Type: "AWS::EC2::EIP"
+        Properties:
+            Domain: "vpc"
+            InstanceId: !Ref EC2Instance
+            Tags: 
+              - 
+                Key: "Name"
+                Value: "CloudFormation"
+
+    EC2SecurityGroup:
+        Type: "AWS::EC2::SecurityGroup"
+        Properties:
+            GroupDescription: "launch-wizard-2 created 2020-07-22T09:49:44.576+09:00"
+            GroupName: "launch-wizard-20"
+            VpcId: !Ref EC2VPC
+            SecurityGroupIngress: 
+              - 
+                CidrIp: "0.0.0.0/0"
+                FromPort: 80
+                IpProtocol: "tcp"
+                ToPort: 80
+              - 
+                CidrIpv6: "::/0"
+                FromPort: 80
+                IpProtocol: "tcp"
+                ToPort: 80
+              - 
+                CidrIp: "0.0.0.0/0"
+                FromPort: 22
+                IpProtocol: "tcp"
+                ToPort: 22
+            SecurityGroupEgress: 
+              - 
+                CidrIp: "0.0.0.0/0"
+                IpProtocol: "-1"
+            Tags: 
+              - 
+                Key: "Name"
+                Value: "CloudFormation"
+
+    EC2LaunchTemplate:
+        Type: "AWS::EC2::LaunchTemplate"
+        Properties:
+            LaunchTemplateName: "miki3"
+            LaunchTemplateData: 
+                SecurityGroupIds: 
+                  - !Ref EC2SecurityGroup
+                KeyName: 「自分が保有しているpemキーの名前」
+                ImageId: 「自分が保有しているAMI、またはインスタンス作成時のAMIID」
+                InstanceType: "t2.micro"
+
+
+- Lang Select -
+data-line属性値
+ファイル名
+🔗分割について
+今回は先にネットワーク部のテンプレートを作成し、作成後にできたリソースをアプリケーション部のテンプレートを作成する時に利用します。
+
+ネットワーク部のテンプレートでは、リソースをアプリケーション部で使える様にするコードが必要です。
+
+アプリケーション部のテンプレートでは、ネットワーク部のリソースを利用できる様にするコードが必要です。
+
+🔗テンプレート内のリソースを別のテンプレートで利用できる様にするコード
+今回はネットワーク部のテンプレートに以下コードを足します。
+
+2行目: ネットワーク部のテンプレートの中のどのリソースを利用するか（論理名）
+3行目: ネットワーク部のテンプレートの中のどのリソースを利用するか（論理値）
+5行目: アプリケーション部のテンプレートに書き込む名前(任意）
+
+Outputs:
+  EC2VPC:
+    Value: !Ref EC2VPC
+    Export:
+      Name: VPC-Template-EC2VPC
+
+- Lang Select -
+data-line属性値
+ファイル名
+🔗別のテンプレートのリソースを読み込んで利用するためのコード
+今回はアプリケーション部のテンプレートを以下の様な書き方に変更します。
+
+例えばネットワーク部のテンプレートで作成したサブネットIDを利用するコードが以下内容になります。
+
+!ImportValueの後にネットワーク部のテンプレートで書いたNameを書きます。
+
+SubnetId: !ImportValue VPC-Template-EC2Subnet
+
+- Lang Select -
+data-line属性値
+ファイル名
+🔗分割後のテンプレート
+🔗ネットワーク部のテンプレート
+AWSTemplateFormatVersion: "2010-09-09"
+Metadata:
+    Generator: "former2"
+Description: "VPC Template"
+Resources:
+    EC2VPC:
+        Type: "AWS::EC2::VPC"
+        Properties:
+            CidrBlock: "10.0.0.0/16"
+            EnableDnsSupport: true
+            EnableDnsHostnames: true
+            InstanceTenancy: "default"
+            Tags: 
+              - 
+                Key: "Name"
+                Value: "CloudFormation"
+
+    EC2Subnet:
+        Type: "AWS::EC2::Subnet"
+        Properties:
+            AvailabilityZone: !Sub "${AWS::Region}a"
+            CidrBlock: "10.0.1.0/24"
+            VpcId: !Ref EC2VPC
+            MapPublicIpOnLaunch: false
+            Tags: 
+              - 
+                Key: "Name"
+                Value: "CloudFormation"
+
+    EC2InternetGateway:
+        Type: "AWS::EC2::InternetGateway"
+        Properties:
+            Tags: 
+              - 
+                Key: "Name"
+                Value: "CloudFormation"
+
+    EC2DHCPOptions:
+        Type: "AWS::EC2::DHCPOptions"
+        Properties:
+            DomainName: !Sub "${AWS::Region}.compute.internal"
+            Tags: 
+              - 
+                Key: "Name"
+                Value: "CloudFormation"
+
+    EC2VPCDHCPOptionsAssociation:
+        Type: "AWS::EC2::VPCDHCPOptionsAssociation"
+        Properties:
+            DhcpOptionsId: !Ref EC2DHCPOptions
+            VpcId: !Ref EC2VPC
+
+    EC2NetworkAcl:
+        Type: "AWS::EC2::NetworkAcl"
+        Properties:
+            VpcId: !Ref EC2VPC
+            Tags: 
+              - 
+                Key: "Name"
+                Value: "CloudFormation"
+
+    EC2NetworkAclEntry:
+        Type: "AWS::EC2::NetworkAclEntry"
+        Properties:
+            CidrBlock: "0.0.0.0/0"
+            Egress: true
+            NetworkAclId: !Ref EC2NetworkAcl
+            Protocol: -1
+            RuleAction: "allow"
+            RuleNumber: 100
+
+    EC2NetworkAclEntry2:
+        Type: "AWS::EC2::NetworkAclEntry"
+        Properties:
+            CidrBlock: "0.0.0.0/0"
+            Egress: false
+            NetworkAclId: !Ref EC2NetworkAcl
+            Protocol: -1
+            RuleAction: "allow"
+            RuleNumber: 100
+
+    EC2RouteTable:
+        Type: "AWS::EC2::RouteTable"
+        Properties:
+            VpcId: !Ref EC2VPC
+            Tags: 
+              - 
+                Key: "Name"
+                Value: "CloudFormation"
+
+    EC2Route:
+        Type: "AWS::EC2::Route"
+        Properties:
+            DestinationCidrBlock: "0.0.0.0/0"
+            GatewayId: !Ref EC2InternetGateway
+            RouteTableId: !Ref EC2RouteTable
+
+    EC2VPCGatewayAttachment:
+        Type: "AWS::EC2::VPCGatewayAttachment"
+        Properties:
+            InternetGatewayId: !Ref EC2InternetGateway
+            VpcId: !Ref EC2VPC
+
+    EC2SubnetNetworkAclAssociation:
+        Type: "AWS::EC2::SubnetNetworkAclAssociation"
+        Properties:
+            SubnetId: !Ref EC2Subnet
+            NetworkAclId: !Ref EC2NetworkAcl
+
+    EC2SubnetRouteTableAssociation:
+        Type: "AWS::EC2::SubnetRouteTableAssociation"
+        Properties:
+            RouteTableId: !Ref EC2RouteTable
+            SubnetId: !Ref EC2Subnet
+
+Outputs:
+  EC2VPC:
+    Value: !Ref EC2VPC
+    Export:
+      Name: VPC-Template-EC2VPC
+
+  EC2Subnet:
+    Value: !Ref EC2Subnet
+    Export:
+      Name: VPC-Template-EC2Subnet
+  
+
+- Lang Select -
+data-line属性値
+ファイル名
+上記テンプレートを作成したら以下の様に、別のテンプレートで使えるリソースが表示されます。
+
+画像に alt 属性が指定されていません。ファイル名: スクリーンショット-2020-10-06-18.25.16-1024x400.png
+🔗アプリケーション部のテンプレート
+AWSTemplateFormatVersion: "2010-09-09"
+Metadata:
+    Generator: "former2"
+Description: "EC2 Template"
+Resources:
+    EC2Instance:
+        Type: "AWS::EC2::Instance"
+        Properties:
+            ImageId: 「自分が保有しているAMI、またはインスタンス作成時のAMIID」
+            InstanceType: "t2.micro"
+            KeyName: 「自分が保有しているpemキーの名前」
+            AvailabilityZone: !Sub "${AWS::Region}a"
+            EbsOptimized: false
+            HibernationOptions: 
+                Configured: false
+            NetworkInterfaces:
+              - AssociatePublicIpAddress: "true"
+                DeviceIndex: "0"
+                SubnetId: !ImportValue VPC-Template-EC2Subnet
+                GroupSet:
+                 - !Ref EC2SecurityGroup
+            Tags: 
+              - 
+                Key: "Name"
+                Value: "CloudFormation"
+            
+
+    EC2NetworkInterface:
+        Type: "AWS::EC2::NetworkInterface"
+        Properties:
+            Description: "Primary network interface"
+            SubnetId: !ImportValue VPC-Template-EC2Subnet
+            SourceDestCheck: true
+            GroupSet: 
+              - !Ref EC2SecurityGroup
+            Tags: 
+              - 
+                Key: "Name"
+                Value: "CloudFormation"
+
+    EC2EIP:
+        Type: "AWS::EC2::EIP"
+        Properties:
+            Domain: "vpc"
+            InstanceId: !Ref EC2Instance
+            Tags: 
+              - 
+                Key: "Name"
+                Value: "CloudFormation"
+
+    EC2SecurityGroup:
+        Type: "AWS::EC2::SecurityGroup"
+        Properties:
+            GroupDescription: "launch-wizard-2 created 2020-07-22T09:49:44.576+09:00"
+            GroupName: "launch-wizard-20"
+            VpcId: !ImportValue VPC-Template-EC2VPC
+            SecurityGroupIngress: 
+              - 
+                CidrIp: "0.0.0.0/0"
+                FromPort: 80
+                IpProtocol: "tcp"
+                ToPort: 80
+              - 
+                CidrIpv6: "::/0"
+                FromPort: 80
+                IpProtocol: "tcp"
+                ToPort: 80
+              - 
+                CidrIp: "0.0.0.0/0"
+                FromPort: 22
+                IpProtocol: "tcp"
+                ToPort: 22
+            SecurityGroupEgress: 
+              - 
+                CidrIp: "0.0.0.0/0"
+                IpProtocol: "-1"
+            Tags: 
+              - 
+                Key: "Name"
+                Value: "CloudFormation"
+
+    EC2LaunchTemplate:
+        Type: "AWS::EC2::LaunchTemplate"
+        Properties:
+            LaunchTemplateName: "miki2"
+            LaunchTemplateData: 
+                SecurityGroupIds: 
+                  - !Ref EC2SecurityGroup
+                KeyName: 「自分が保有しているpemキーの名前」
+                ImageId: 「自分が保有しているAMI、またはインスタンス作成時のAMIID」
+                InstanceType: "t2.micro"
+
+
+- Lang Select -
+data-line属性値
+ファイル名
+まとめ
+テンプレートをネットワーク部とアプリケーション部といった形で分けることは、ネットワーク構成が複雑になっていく時に大変便利です。
+
+また、EC2は良く削除するがVPCは削除しないといった時に便利です。
+
