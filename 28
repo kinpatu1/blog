@@ -1,0 +1,250 @@
+一つのテンプレートを別リージョンでも使いやすくするマッピングを利用した
+
+このブログ記事を書く時、基本的には「バージニア北部リージョン」でリソースを作成しますが、自分で使うリソースは「東京リージョン」に作成します。
+
+CloudFormationのテンプレートは同じものでも利用するリージョン、またはアカウントによって変更しないといけない箇所があります。
+
+そこで、変更しないといけない箇所をマッピングにまとめておき、その値を指定することで利用することができます。
+
+続きを読む
+作成する構成
+前回同様に以下の様な構成を作成します。
+
+画像に alt 属性が指定されていません。ファイル名: Untitled-Diagram-2-1.png
+マッピングについて
+例えば東京リージョン、バージニア北部リージョンで、apacheを起動させたい時には、以下の様な構文をテンプレートの最後に記述します。
+
+東京、バージニア北部リージョンにはそれぞれapacheを起動するためのAMI、snapshot、pemキーを用意しておきます。
+
+Mappings:
+  apache:
+    ap-northeast-1:
+      AMI: 東京リージョンのAMIID
+      snapshot: 東京リージョンのスナップショットID
+      key: 東京リージョンのpemキー
+    us-east-1:
+      AMI: バージニア北部リージョンのAMIID
+      snapshot: バージニア北部リージョンのスナップショットID
+      key: バージニア北部リージョンのpemキー
+
+- Lang Select -
+data-line属性値
+ファイル名
+実際にマッピングで定義したものを利用する時は、以下の様な指定方法で記述します。
+
+ImageId: !FindInMap [ apache, us-east-1, AMI ]
+
+- Lang Select -
+data-line属性値
+ファイル名
+テンプレート
+AWSTemplateFormatVersion: "2010-09-09"
+Metadata:
+    Generator: "former2"
+Description: ""
+Resources:
+    EC2VPC:
+        Type: "AWS::EC2::VPC"
+        Properties:
+            CidrBlock: "10.0.0.0/16"
+            EnableDnsSupport: true
+            EnableDnsHostnames: true
+            InstanceTenancy: "default"
+            Tags: 
+              - 
+                Key: "Name"
+                Value: "CloudFormation"
+
+    EC2Subnet:
+        Type: "AWS::EC2::Subnet"
+        Properties:
+            AvailabilityZone: !Sub "${AWS::Region}a"
+            CidrBlock: "10.0.1.0/24"
+            VpcId: !Ref EC2VPC
+            MapPublicIpOnLaunch: false
+            Tags: 
+              - 
+                Key: "Name"
+                Value: "CloudFormation"
+
+    EC2InternetGateway:
+        Type: "AWS::EC2::InternetGateway"
+        Properties:
+            Tags: 
+              - 
+                Key: "Name"
+                Value: "CloudFormation"
+
+    EC2DHCPOptions:
+        Type: "AWS::EC2::DHCPOptions"
+        Properties:
+            DomainName: !Sub "${AWS::Region}.compute.internal"
+            Tags: 
+              - 
+                Key: "Name"
+                Value: "CloudFormation"
+
+    EC2VPCDHCPOptionsAssociation:
+        Type: "AWS::EC2::VPCDHCPOptionsAssociation"
+        Properties:
+            DhcpOptionsId: !Ref EC2DHCPOptions
+            VpcId: !Ref EC2VPC
+
+    EC2NetworkAcl:
+        Type: "AWS::EC2::NetworkAcl"
+        Properties:
+            VpcId: !Ref EC2VPC
+            Tags: 
+              - 
+                Key: "Name"
+                Value: "CloudFormation"
+
+    EC2NetworkAclEntry:
+        Type: "AWS::EC2::NetworkAclEntry"
+        Properties:
+            CidrBlock: "0.0.0.0/0"
+            Egress: true
+            NetworkAclId: !Ref EC2NetworkAcl
+            Protocol: -1
+            RuleAction: "allow"
+            RuleNumber: 100
+
+    EC2NetworkAclEntry2:
+        Type: "AWS::EC2::NetworkAclEntry"
+        Properties:
+            CidrBlock: "0.0.0.0/0"
+            Egress: false
+            NetworkAclId: !Ref EC2NetworkAcl
+            Protocol: -1
+            RuleAction: "allow"
+            RuleNumber: 100
+
+    EC2RouteTable:
+        Type: "AWS::EC2::RouteTable"
+        Properties:
+            VpcId: !Ref EC2VPC
+            Tags: 
+              - 
+                Key: "Name"
+                Value: "CloudFormation"
+
+    EC2Route:
+        Type: "AWS::EC2::Route"
+        Properties:
+            DestinationCidrBlock: "0.0.0.0/0"
+            GatewayId: !Ref EC2InternetGateway
+            RouteTableId: !Ref EC2RouteTable
+
+    EC2VPCGatewayAttachment:
+        Type: "AWS::EC2::VPCGatewayAttachment"
+        Properties:
+            InternetGatewayId: !Ref EC2InternetGateway
+            VpcId: !Ref EC2VPC
+
+    EC2SubnetNetworkAclAssociation:
+        Type: "AWS::EC2::SubnetNetworkAclAssociation"
+        Properties:
+            SubnetId: !Ref EC2Subnet
+            NetworkAclId: !Ref EC2NetworkAcl
+
+    EC2SubnetRouteTableAssociation:
+        Type: "AWS::EC2::SubnetRouteTableAssociation"
+        Properties:
+            RouteTableId: !Ref EC2RouteTable
+            SubnetId: !Ref EC2Subnet
+
+    EC2Instance:
+        Type: "AWS::EC2::Instance"
+        Properties:
+            ImageId: !FindInMap [ rennsyuu, us-east-1, AMI ]
+            InstanceType: "t2.micro"
+            KeyName: !FindInMap [ rennsyuu, us-east-1,key ]
+            AvailabilityZone: !Sub "${AWS::Region}a"
+            EbsOptimized: false
+            HibernationOptions: 
+                Configured: false
+            NetworkInterfaces:
+              - AssociatePublicIpAddress: "true"
+                DeviceIndex: "0"
+                SubnetId: !Ref EC2Subnet
+                GroupSet:
+                 - !Ref EC2SecurityGroup
+            Tags: 
+              - 
+                Key: "Name"
+                Value: "CloudFormation"
+            
+
+    EC2NetworkInterface:
+        Type: "AWS::EC2::NetworkInterface"
+        Properties:
+            Description: "Primary network interface"
+            SubnetId: !Ref EC2Subnet
+            SourceDestCheck: true
+            GroupSet: 
+              - !Ref EC2SecurityGroup
+            Tags: 
+              - 
+                Key: "Name"
+                Value: "CloudFormation"
+
+    EC2EIP:
+        Type: "AWS::EC2::EIP"
+        Properties:
+            Domain: "vpc"
+            InstanceId: !Ref EC2Instance
+            Tags: 
+              - 
+                Key: "Name"
+                Value: "CloudFormation"
+
+    EC2SecurityGroup:
+        Type: "AWS::EC2::SecurityGroup"
+        Properties:
+            GroupDescription: "launch-wizard-2 created 2020-07-22T09:49:44.576+09:00"
+            GroupName: "launch-wizard-20"
+            VpcId: !Ref EC2VPC
+            SecurityGroupIngress: 
+              - 
+                CidrIp: "0.0.0.0/0"
+                FromPort: 80
+                IpProtocol: "tcp"
+                ToPort: 80
+              - 
+                CidrIpv6: "::/0"
+                FromPort: 80
+                IpProtocol: "tcp"
+                ToPort: 80
+              - 
+                CidrIp: "0.0.0.0/0"
+                FromPort: 22
+                IpProtocol: "tcp"
+                ToPort: 22
+            SecurityGroupEgress: 
+              - 
+                CidrIp: "0.0.0.0/0"
+                IpProtocol: "-1"
+            Tags: 
+              - 
+                Key: "Name"
+                Value: "CloudFormation"
+
+Mappings:
+  apache:
+    ap-northeast-1:
+      AMI: 東京リージョンのAMIID
+      snapshot: 東京リージョンのスナップショットID
+      key: 東京リージョンのpemキー
+    us-east-1:
+      AMI: バージニア北部リージョンのAMIID
+      snapshot: バージニア北部リージョンのスナップショットID
+      key: バージニア北部リージョンのpemキー
+
+- Lang Select -
+data-line属性値
+ファイル名
+まとめ
+久しぶりにCloudFormationを利用する時には、どこを変更しないといけないか忘れてしまいエラーが良く出ていました。
+
+マッピングにまとめておくことで、エラーをなくすことができました。
+
