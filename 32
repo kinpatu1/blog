@@ -1,2 +1,96 @@
-README.md:1:AWSAccessKeyId=AKIAIOSFODNN1EXAMPLE
-README.md:2:AWSSecretKey=wJalrXUtnFEMI/K1MDENG/bPxRfiCYEXAMPLEKEY
+不正利用、多額請求からAWSアカウントを守る方法
+
+今回、AWSについて知り合いと話す機会があり、AWSアカウントが不正利用され多額の請求がきた記事を見たので、AWSを触るのは怖いといった意見を聞きました。
+
+そこでなぜ不正利用されたのか、また対策等調べたのでここにまとめておきます。
+
+続きを読む
+🔗原因
+AWSアカウントに悪意を持ったハッカーが入り込み、EC2を起動できるだけ起動するといったことが原因の様です。
+
+このハッカーは最近だと仮想通貨のマイニングにEC2を利用している様です。
+
+では、なぜハッカーにログインされるかですが、ずばりアクセスキー、シークレットアクセスキーが盗まれているからです。
+
+これらのキーは以前の記事で一度扱いましたが、AWSにアクセスするために必要となるキーです。
+
+不正利用された方の多くは、自分が書いたコードの中にこれらのキーを書き込んでいて、このコードをgitにプッシュすることで、キーを盗まれています。
+
+ハッカーはgitに上がっているコードの中から、キーを検索する手段をもっている様です。
+
+🔗git-secretsで対策
+git-secretsをインストールし設定することで、git commit時にキーが含まれていると、エラーが表示されcommitできなくなります。
+
+🔗事前準備
+🔗git-secretsのインストール
+macOSでhomebrewを利用している方はこちら。
+
+<!-- homebrewのインストール -->
+brew install git-secrets
+
+- Lang Select -
+data-line属性値
+ファイル名
+そうでなければこちら。
+
+cd <任意の場所>
+<!-- cloneの作成 -->
+git clone https://github.com/awslabs/git-secrets.git
+cd git-secrets
+make install
+
+- Lang Select -
+data-line属性値
+ファイル名
+🔗リポジトリ毎にgit-secretsの設定
+この設定は既に利用しているリポジトリや、新規リポジトリ個別にgit-secretsの設定をしたい方にオススメです。
+
+mkdir test
+cd test
+git init
+git secrets --install
+<!-- secret_access_keyに近い情報があれば弾く設定 -->
+git secrets --register-aws
+touch test
+echo "aws_secret_access_key = " > test
+git add test
+git commit -a -m ""
+
+- Lang Select -
+data-line属性値
+ファイル名
+🔗新規リポジトリに対してgit-secretsの設定
+リポジトリ毎にgit-secretsの設定をするのが面倒で、新しくリポジトリを作成したときに適用させたい方にオススメです。
+
+git secrets --register-aws --global
+git secrets --install ~/.git-templates/git-secrets
+git config --global init.templateDir ~/.git-templates/git-secrets
+mkdir test
+cd test
+git init
+touch test
+echo "aws_secret_access_key = " > test
+git add test
+git commit -a -m ""
+
+- Lang Select -
+data-line属性値
+ファイル名
+🔗それでも不正利用された時
+もし、身に覚えのないリソースが作成されていることに気付いたら、こちらの対応を一通りして、ハッカーが新しくリソースを作成できない様にしましょう。
+
+次に気付いた時点でかかった費用は、この様にAWSに申請することで返金対応をしていただける様です。
+
+
+﻿
+
+まとめ
+被害に遭った事例はあまり見ませんが、他にもユーザー名、パスワードを用いてログインする方法があり、これに対する対策はMFA認証を有効化させることです。
+
+以上の様に記事をまとめましたが、一番良い対策はコード上にそもそもキーを書かない様に工夫することだと思いました。
+
+tips
+実際に被害に遭ってからの時間経過等まとめてくれています。
+
+https://qiita.com/kojiro_ueda/items/503d24b313a3a80b8ecc
+https://qiita.com/AkiyoshiOkano/items/72002409e3be9215ae7e
