@@ -1,0 +1,948 @@
+これだけやればAWS DVAの合格率80%
+<!-- wp:paragraph -->
+<p>2020/11/14にAWS DVAを受け、点数はまだ分かりませんが合格でした。</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:paragraph -->
+<p>DVAに合格した人の記事は色々ありますが、この記事では具体的にどのサービスのどんな機能を理解していたら、合格に近づけるのかを書きます。</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:paragraph -->
+<p>とても量が多くなるので、分からない機能だけ自分で内容を調べる形でこの記事を使ってください。</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:more -->
+<!--more-->
+<!-- /wp:more -->
+
+<!-- wp:heading {"level":1} -->
+<h1>EC2</h1>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>EC２フリート</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":1} -->
+<h1>ALB</h1>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>動的ポートマッピング</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>リクエストヘッダー</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>クロスゾーン負荷分散</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>Connection Draining</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>スティッキーセッション</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>SSL/Termination</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":1} -->
+<h1>Route53</h1>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>ルーティングポリシー</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>レコードタイプ</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":1} -->
+<h1>CodeBuild</h1>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>ローカルビルドサポート</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>タイムアウト</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>依存関係</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>保管時のデータの暗号化</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>ログ取得方法</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":1} -->
+<h1>CodeCommit</h1>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>AWS CodeCommit へのアクセス</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>既存のGitリポジトリをCodeCommitリポジトリに移行</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":1} -->
+<h1>CodeDeploy</h1>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>CodeDeployフック</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>CodeDeployライフサイクルイベント</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>デプロイグループ</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>デプロイ設定</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>ロールバック時のデプロイID</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>デプロイタイプ</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>AppSpec</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>CodeDeploy Agentソフトウェアパッケージ</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>IAM インスタンスプロファイル</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>リビジョン</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":1} -->
+<h1>CodePipeline</h1>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>承認アクション</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>カスタムプラグイン</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>Stages</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>アクション</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>パイプライン実行</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>Transitions</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":1} -->
+<h1>ECS</h1>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>pullする方法</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>制約タイプ</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>ecs.configファイル</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>IAM</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>タスク配置戦略</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>タスク定義</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>タスク実行</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>タスクとスケジュール</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>サービススケジューラー</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>データ管理</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>クラスター</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>クラスタークエリ言語</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>コンテナエージェント</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>サービスディスカバリ</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":1} -->
+<h1>S3</h1>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>サーバーアクセスログ</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>Cross-Origin Resource Sharing</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>静的ウェブサイトのホスト</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>-max-items オプション</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>--page-size オプション</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>Amazon S3 のデータ整合性モデル</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>アクセス制限</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>バージョニング</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>アクセスログ</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>AssumeRole</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>x-amz-server-side-encryptionヘッダー</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>S3 Select</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>Access Denied 原因</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":1} -->
+<h1>Elastic Beanstalk</h1>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>スケーリングヘルスレポート</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>環境変数</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>ebextensionファイル</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>X-Rayとの連携</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>ワーカー環境</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>cron.yaml</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>env.yaml</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>上手く起動しなかった時の対処法</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>ライフサイクルポリシー</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>デプロイ時に利用するサービス</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>デプロイ方法</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":1} -->
+<h1>Kinesis Data Stream</h1>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>ProvisionedThroughputExceededExceptionエラー</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>エクスポネンシャルバックオフ</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>シャード</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>ストリーム</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>シャードに合わせたインスタンスサイズの増強</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>データ保持期限</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>エントリの重複排除</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>時間とともにスケール</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>Amazon Kinesis アダプター</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":1} -->
+<h1>DynamoDB</h1>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>並列スキャン</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>自動再試行</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>リファクタリング</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>グローバルテーブル</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>条件付き更新と条件付き書き込み</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>パーティション</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>キー</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>インデックス</h4>
+<!-- /wp:heading -->
+
+<!-- wp:paragraph -->
+<p><strong>--projection-expression</strong></p>
+<!-- /wp:paragraph -->
+
+<!-- wp:heading {"level":4} -->
+<h4>Scan メソッド</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>filter_expression</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>TTL</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>BatchGetItem</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>BatchWriteItem</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>ストリーム</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>アトミックカウンター</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>カーディナリティ</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>ストレージ容量</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>シャードイテレータ</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>シャードイテレーターが使用可能になる直前に期限切れになった場合</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>ProvisionedThroughputExceededExceptionという例外エラー</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>オンデマンドモードテーブル</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>トランザクション</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>オプティミスティックロック</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":1} -->
+<h1>RDS</h1>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>定期バックアップ</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>RDS暗号化</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>透過的なデータ暗号化</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>拡張モニタリング</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":1} -->
+<h1>Aurora</h1>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>クロスリージョンレプリケーション</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>Aurora Serverless</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>エンドポイント</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":1} -->
+<h1>Lambda</h1>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>ランタイム</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>AWSLambdaDynamoDBExecutionRole管理ポリシー</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>Provisioned Concurrency</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>初めての呼び出し</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>Lambda関数のインターネット接続設定</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>暗号化</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>Lambda@Edge</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>エイリアス</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>依存関係の設定</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>AWS::Lambda::Function</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>レイヤー</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>非同期処理</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>ローカルディレクトリー/tmp</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>環境変数</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>1 MB以上のデータを暗号化</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>DeadLetterConfig</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>CloudWatchとの連携</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":1} -->
+<h1>X-Ray</h1>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>サンプリングルール</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>トレースセグメント</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>セグメントドキュメント</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>サブセグメント</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>Annotation</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>X-Ray トレース</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>ECSとの連携</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>Lambdaとの連携</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>AWSXrayReadOnlyAccess</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>X-Rayデーモン</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":1} -->
+<h1>SQS</h1>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>changeMes​​sageVisibility API</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>ファンアウトパターン</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>ロングポーリングとショートポーリング</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>遅延キュー</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>メッセージタイマー</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>可視性タイムアウト</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>Amazon SQS 拡張クライアントライブラリ</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>Dead Letter Queue</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>メッセージの保存期間</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>メッセージ重複排除 ID</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>メッセージグループ ID</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>メッセージメタデータ</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>Queueの種類</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":1} -->
+<h1>Cloud Watch</h1>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>有効期限ポリシー</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>メトリクスの種類</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>高解像度メトリクス</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>カスタムメトリクス</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>PutMetricData</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>CloudWatchエージェント</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":1} -->
+<h1>KMS</h1>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>最大データサイズ</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>カスタマーマスターキー (CMK)の種類</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>キーの回転</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>データの暗号化</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>エンベロープ暗号化</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>CloudTrailとの統合</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":1} -->
+<h1>Systems Manager</h1>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>パラメータストア</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":1} -->
+<h1>ElastiCache</h1>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>MemcachedとRedisとの違い</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>インメモリデータストア</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>Redis AUTH</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>Redis At-Rest Encryption</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>戦略</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":1} -->
+<h1>SAM</h1>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>S3ReadPolicy</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>コマンド</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>CloudFormationの設定方法</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":1} -->
+<h1>Secrets Manager</h1>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>Rotation</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>ステージングラベル</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>バージョニング</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":1} -->
+<h1>API Gateway</h1>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>APIの種類</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":1} -->
+<h1>WAF</h1>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>ウェブ ACL</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>AWS WAF ウェブ ACL キャパシティーユニット (WCU)</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>Referer制限</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":1} -->
+<h1>Cognito</h1>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>ユーザープール</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>ID プール</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>Cognito ID</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>Cognito Sync</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":1} -->
+<h1>AppSync</h1>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":1} -->
+<h1>IAM</h1>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>署名バージョン 4</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>IAM Policy Simulator</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>SSL / TLS証明書</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>AWSリソースにプログラムでアクセスするための方法</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":1} -->
+<h1>CloudFront</h1>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>ビューアとCloudFront間のHTTPS化</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":1} -->
+<h1>Security Token Service</h1>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>有効期限</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>AssumeRoleWithWebIdentity</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>AssumeRoleWithSAML</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":1} -->
+<h1>AWS Single Sign-On</h1>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":1} -->
+<h1>OpsWorks</h1>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>スタック</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>レシピ</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>レイヤー</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":1} -->
+<h1>SWF</h1>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>マーカー</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>タイマー</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>タグ</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading {"level":4} -->
+<h4>シグナル</h4>
+<!-- /wp:heading -->
+
+<!-- wp:heading -->
+<h2>まとめ</h2>
+<!-- /wp:heading -->
+
+<!-- wp:paragraph -->
+<p>今回あげた項目を全て覚えたら合格にかなり近づけるかと思います。</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:paragraph -->
+<p>一つ一つ調べるのは大変かと思いますが、調べた方が身につきますし、どこを学習したら良いかだけここで把握して頂けたら幸いです。</p>
+<!-- /wp:paragraph -->
