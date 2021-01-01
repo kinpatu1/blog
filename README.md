@@ -50,3 +50,7 @@ TCO計算ツール
 コスト配分レポート
 https://aws.amazon.com/jp/products/
 サポートプラン
+
+
+S3
+https://docs.aws.amazon.com/ja_jp/AmazonS3/latest/dev/example-bucket-policies.html
