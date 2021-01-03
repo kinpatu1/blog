@@ -29,3 +29,8 @@ sessionmanagerのログ保管等設定
 
 
 CloudFormationのcondition等について書く組み込み関数も
+
+
+udemy
+cloudformation 4
+SSM 4
