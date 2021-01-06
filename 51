@@ -1,0 +1,260 @@
+CloudFormationのテンプレートにユーザーデータを利用
+
+以前の記事でインスタンスを起動する時にユーザーデータを利用する方法について書きましたが、CloudFormationでインスタンスを起動する時にも利用できるのでまとめておきました。
+
+こちらはsysopsの試験問題としては見かけませんでしたが、一応試験範囲の様です。
+
+続きを読む
+作成する構成
+画像に alt 属性が指定されていません。ファイル名: Untitled-Diagram-2-1.png
+ユーザーデータについて
+おさらいになりますが、ユーザーデータとはインスタンスを起動する時に、インスタンスに対して設定したい内容を定義するシェルスクリプトになります。
+
+#!/bin/bashが必須、sudoコマンドが使えない点はEC2の詳細設定の時と同じですが、CloudFormationに定義する場合、組み込み関数を利用して入力文字列の Base64 表現を返す必要があります。
+
+具体的には以下コードをテンプレートに加えます。
+
+インテントは完成形を参考に揃えてください。
+
+UserData:
+  Fn::Base64: |
+    #!/bin/bash
+
+- Lang Select -
+ファイル名
+data-line属性値
+sysopsとしての考え方
+本番環境、検証環境で利用するリソースにはそれぞれに差異があっては困ります。
+
+したがって、新しくインスタンスを利用する場合、インスタンスを起動する時にソフトウェアをインストールする様設定するのがベストプラクティクスです。
+
+そうすることで、人的ミスで設定に差異が生まれることを防ぐことができます。
+
+大規模なサービスでインスタンスを数百台利用している様な案件では、ユーザーデータの利用は特に有効です。
+
+完成形
+今回はVPC、サブネット、インスタンスを作成するテンプレートになります。
+
+また、マッピングに定義している内容は以前の記事を参考に編集してください。
+
+AWSTemplateFormatVersion: "2010-09-09"
+Metadata:
+    Generator: "former2"
+Description: ""
+Resources:
+    EC2VPC:
+        Type: "AWS::EC2::VPC"
+        Properties:
+            CidrBlock: "10.0.0.0/16"
+            EnableDnsSupport: true
+            EnableDnsHostnames: true
+            InstanceTenancy: "default"
+            Tags: 
+              - 
+                Key: "Name"
+                Value: "CloudFormation"
+
+    EC2Subnet:
+        Type: "AWS::EC2::Subnet"
+        Properties:
+            AvailabilityZone: !Sub "${AWS::Region}a"
+            CidrBlock: "10.0.1.0/24"
+            VpcId: !Ref EC2VPC
+            MapPublicIpOnLaunch: false
+            Tags: 
+              - 
+                Key: "Name"
+                Value: "CloudFormation"
+
+    EC2InternetGateway:
+        Type: "AWS::EC2::InternetGateway"
+        Properties:
+            Tags: 
+              - 
+                Key: "Name"
+                Value: "CloudFormation"
+
+    EC2DHCPOptions:
+        Type: "AWS::EC2::DHCPOptions"
+        Properties:
+            DomainName: !Sub "${AWS::Region}.compute.internal"
+            DomainNameServers: 
+              - AmazonProvidedDNS
+            NtpServers: 
+              - 10.2.5.1
+            NetbiosNameServers: 
+              - 10.2.5.1
+            NetbiosNodeType: 2
+            Tags: 
+              - 
+                Key: "Name"
+                Value: "CloudFormation"
+
+    EC2VPCDHCPOptionsAssociation:
+        Type: "AWS::EC2::VPCDHCPOptionsAssociation"
+        Properties:
+            DhcpOptionsId: !Ref EC2DHCPOptions
+            VpcId: !Ref EC2VPC
+
+    EC2NetworkAcl:
+        Type: "AWS::EC2::NetworkAcl"
+        Properties:
+            VpcId: !Ref EC2VPC
+            Tags: 
+              - 
+                Key: "Name"
+                Value: "CloudFormation"
+
+    EC2NetworkAclEntry:
+        Type: "AWS::EC2::NetworkAclEntry"
+        Properties:
+            CidrBlock: "0.0.0.0/0"
+            Egress: true
+            NetworkAclId: !Ref EC2NetworkAcl
+            Protocol: -1
+            RuleAction: "allow"
+            RuleNumber: 100
+
+    EC2NetworkAclEntry2:
+        Type: "AWS::EC2::NetworkAclEntry"
+        Properties:
+            CidrBlock: "0.0.0.0/0"
+            Egress: false
+            NetworkAclId: !Ref EC2NetworkAcl
+            Protocol: -1
+            RuleAction: "allow"
+            RuleNumber: 100
+
+    EC2RouteTable:
+        Type: "AWS::EC2::RouteTable"
+        Properties:
+            VpcId: !Ref EC2VPC
+            Tags: 
+              - 
+                Key: "Name"
+                Value: "CloudFormation"
+
+    EC2Route:
+        Type: "AWS::EC2::Route"
+        Properties:
+            DestinationCidrBlock: "0.0.0.0/0"
+            GatewayId: !Ref EC2InternetGateway
+            RouteTableId: !Ref EC2RouteTable
+
+    EC2VPCGatewayAttachment:
+        Type: "AWS::EC2::VPCGatewayAttachment"
+        Properties:
+            InternetGatewayId: !Ref EC2InternetGateway
+            VpcId: !Ref EC2VPC
+
+    EC2SubnetNetworkAclAssociation:
+        Type: "AWS::EC2::SubnetNetworkAclAssociation"
+        Properties:
+            SubnetId: !Ref EC2Subnet
+            NetworkAclId: !Ref EC2NetworkAcl
+
+    EC2SubnetRouteTableAssociation:
+        Type: "AWS::EC2::SubnetRouteTableAssociation"
+        Properties:
+            RouteTableId: !Ref EC2RouteTable
+            SubnetId: !Ref EC2Subnet
+
+    EC2Instance:
+        Type: "AWS::EC2::Instance"
+        Properties:
+            ImageId: !FindInMap [ MappingName1, us-east-1, AMI ]
+            InstanceType: "t2.micro"
+            KeyName: !FindInMap [ MappingName1, us-east-1, key ]
+            AvailabilityZone: !Sub "${AWS::Region}a"
+            EbsOptimized: false
+            HibernationOptions: 
+                Configured: false
+            NetworkInterfaces:
+              - AssociatePublicIpAddress: "true"
+                DeviceIndex: "0"
+                SubnetId: !Ref EC2Subnet
+                GroupSet:
+                 - !Ref EC2SecurityGroup
+            UserData:
+              Fn::Base64: |
+                #!/bin/bash
+                yum -y install httpd
+                service httpd start
+                systemctl enable httpd.service
+                echo "shohei miki's blog" > /var/www/html/index.html
+            Tags: 
+              - 
+                Key: "Name"
+                Value: "CloudFormation"
+            
+
+    EC2NetworkInterface:
+        Type: "AWS::EC2::NetworkInterface"
+        Properties:
+            Description: "Primary network interface"
+            SubnetId: !Ref EC2Subnet
+            SourceDestCheck: true
+            GroupSet: 
+              - !Ref EC2SecurityGroup
+            Tags: 
+              - 
+                Key: "Name"
+                Value: "CloudFormation"
+
+    EC2EIP:
+        Type: "AWS::EC2::EIP"
+        Properties:
+            Domain: "vpc"
+            InstanceId: !Ref EC2Instance
+            Tags: 
+              - 
+                Key: "Name"
+                Value: "CloudFormation"
+
+    EC2SecurityGroup:
+        Type: "AWS::EC2::SecurityGroup"
+        Properties:
+            GroupDescription: "launch-wizard-2 created 2020-07-22T09:49:44.576+09:00"
+            GroupName: "launch-wizard-20"
+            VpcId: !Ref EC2VPC
+            SecurityGroupIngress: 
+              - 
+                CidrIp: "0.0.0.0/0"
+                FromPort: 80
+                IpProtocol: "tcp"
+                ToPort: 80
+              - 
+                CidrIpv6: "::/0"
+                FromPort: 80
+                IpProtocol: "tcp"
+                ToPort: 80
+              - 
+                CidrIp: "0.0.0.0/0"
+                FromPort: 22
+                IpProtocol: "tcp"
+                ToPort: 22
+            SecurityGroupEgress: 
+              - 
+                CidrIp: "0.0.0.0/0"
+                IpProtocol: "-1"
+            Tags: 
+              - 
+                Key: "Name"
+                Value: "CloudFormation"
+
+Mappings:
+  MappingName1:
+    us-east-1:
+      AMI: ami-0be2609ba883822ec
+      key: Virginia	
+
+- Lang Select -
+ファイル名
+data-line属性値
+料金表
+画像に alt 属性が指定されていません。ファイル名: Untitled-Diagram-1-1.png
+まとめ
+ソフトウェアを利用したい場合に、インスタンス起動時にソフトウェアをインストールする方法を今回は紹介しました。
+
+実際に現場で運用する場合にはユーザーデータを利用するのではなく、既にソフトウェアをインストールしているAMIを利用するのも選択肢の一つかと思います。
+
