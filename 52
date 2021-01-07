@@ -1,0 +1,184 @@
+CloudFormationの変更セットで新テンプレートの差分分析
+
+CloudFormationで既にテンプレートを展開している場合に、構成を変更する方法は直接リソースを追加する方法と、スタックを更新する方法があります。
+
+後者のスタックを更新する方法を利用する時に、変更セットを利用することで、新しく作成されるリソース、削除されるリソース、修正されるリソースを確認することができます。
+
+今回は変更セットの方法、表示される画面についてまとめていきます。
+
+続きを読む
+🔗変更前のテンプレート
+変更前はVPCだけの構成になります。
+
+画像に alt 属性が指定されていません。ファイル名: Untitled-Diagram-3.png
+以下がテンプレートになります。
+
+AWSTemplateFormatVersion: "2010-09-09"
+Metadata:
+    Generator: "former2"
+Description: ""
+Resources:
+    EC2VPC:
+        Type: "AWS::EC2::VPC"
+        Properties:
+            CidrBlock: "10.0.0.0/16"
+            EnableDnsSupport: true
+            EnableDnsHostnames: true
+            InstanceTenancy: "default"
+            Tags: 
+              - 
+                Key: "Name"
+                Value: "miki"
+
+- Lang Select -
+ファイル名
+data-line属性値
+🔗変更後のテンプレート
+変更後はインターネットゲートウェイ、サブネット等追加しております。
+
+画像に alt 属性が指定されていません。ファイル名: Untitled-Diagram-1-2.png
+以下がテンプレートになります。
+
+AWSTemplateFormatVersion: "2010-09-09"
+Metadata:
+    Generator: "former2"
+Description: ""
+Resources:
+    EC2VPC:
+        Type: "AWS::EC2::VPC"
+        Properties:
+            CidrBlock: "10.0.0.0/16"
+            EnableDnsSupport: true
+            EnableDnsHostnames: true
+            InstanceTenancy: "default"
+            Tags: 
+              - 
+                Key: "Name"
+                Value: "miki"
+
+    EC2Subnet:
+        Type: "AWS::EC2::Subnet"
+        Properties:
+            AvailabilityZone: !Sub "${AWS::Region}a"
+            CidrBlock: "10.0.1.0/24"
+            VpcId: !Ref EC2VPC
+            MapPublicIpOnLaunch: false
+            Tags: 
+              - 
+                Key: "Name"
+                Value: "miki"
+
+    EC2InternetGateway:
+        Type: "AWS::EC2::InternetGateway"
+        Properties:
+            Tags: 
+              - 
+                Key: "Name"
+                Value: "miki"
+
+    EC2DHCPOptions:
+        Type: "AWS::EC2::DHCPOptions"
+        Properties:
+            DomainName: !Sub "${AWS::Region}.compute.internal"
+            Tags: 
+              - 
+                Key: "Name"
+                Value: "miki"
+
+    EC2VPCDHCPOptionsAssociation:
+        Type: "AWS::EC2::VPCDHCPOptionsAssociation"
+        Properties:
+            DhcpOptionsId: !Ref EC2DHCPOptions
+            VpcId: !Ref EC2VPC
+
+    EC2NetworkAcl:
+        Type: "AWS::EC2::NetworkAcl"
+        Properties:
+            VpcId: !Ref EC2VPC
+            Tags: 
+              - 
+                Key: "Name"
+                Value: "miki"
+
+    EC2NetworkAclEntry:
+        Type: "AWS::EC2::NetworkAclEntry"
+        Properties:
+            CidrBlock: "0.0.0.0/0"
+            Egress: true
+            NetworkAclId: !Ref EC2NetworkAcl
+            Protocol: -1
+            RuleAction: "allow"
+            RuleNumber: 100
+
+    EC2NetworkAclEntry2:
+        Type: "AWS::EC2::NetworkAclEntry"
+        Properties:
+            CidrBlock: "0.0.0.0/0"
+            Egress: false
+            NetworkAclId: !Ref EC2NetworkAcl
+            Protocol: -1
+            RuleAction: "allow"
+            RuleNumber: 100
+
+    EC2RouteTable:
+        Type: "AWS::EC2::RouteTable"
+        Properties:
+            VpcId: !Ref EC2VPC
+            Tags: 
+              - 
+                Key: "Name"
+                Value: "miki"
+
+    EC2Route:
+        Type: "AWS::EC2::Route"
+        Properties:
+            DestinationCidrBlock: "0.0.0.0/0"
+            GatewayId: !Ref EC2InternetGateway
+            RouteTableId: !Ref EC2RouteTable
+
+    EC2VPCGatewayAttachment:
+        Type: "AWS::EC2::VPCGatewayAttachment"
+        Properties:
+            InternetGatewayId: !Ref EC2InternetGateway
+            VpcId: !Ref EC2VPC
+
+    EC2SubnetNetworkAclAssociation:
+        Type: "AWS::EC2::SubnetNetworkAclAssociation"
+        Properties:
+            SubnetId: !Ref EC2Subnet
+            NetworkAclId: !Ref EC2NetworkAcl
+
+    EC2SubnetRouteTableAssociation:
+        Type: "AWS::EC2::SubnetRouteTableAssociation"
+        Properties:
+            RouteTableId: !Ref EC2RouteTable
+            SubnetId: !Ref EC2Subnet
+
+
+
+- Lang Select -
+ファイル名
+data-line属性値
+🔗変更セットの設定
+1,2,3の順で進みます。
+
+画像に alt 属性が指定されていません。ファイル名: スクリーンショット-2021-01-08-2.21.31-1024x224.png
+1,2,3の順で進みます。
+
+画像に alt 属性が指定されていません。ファイル名: スクリーンショット-2021-01-08-2.23.02-1024x491.png
+次の画面、そのまた次の画面では変更しないで「次へ」をクリックします。
+
+🔗変更セットの見方
+今回テンプレートに対して行ったことは新しいリソースを追加したことでした。
+
+したがって、アクションには「Add」が表示されます。(他にもmodify,  deleteというアクションがあります。)
+
+画像に alt 属性が指定されていません。ファイル名: CloudFormation-スタック-blog1-1024x584.png
+
+料金表
+画像に alt 属性が指定されていません。ファイル名: Untitled-Diagram-4.png
+まとめ
+変更セットを利用することで、事前に変更されるリソースについて把握することができます。
+
+今回の内容もsysopsの試験範囲のもので、変更セットについて理解しておくこと、直接リソースを作成するという選択肢があることも頭に入れておくと役に立つかと思います。
+

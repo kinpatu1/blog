@@ -32,5 +32,5 @@ CloudFormationのcondition等について書く組み込み関数も
 
 
 udemy
-cloudformation 3
 SSM 4
+スタックセット
