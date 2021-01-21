@@ -1,0 +1,369 @@
+Alexaがホストするサーバーで開発してみた
+
+前回は、独自にプロビジョニングする（以前まではユーザー定義のプロビジョニングという名称）方法で、Alexaを開発しましたが、今回はAlexaがホストするサーバーで開発してみました。
+
+スキルを公開しないで自分達だけで利用する場合等、アクセス数がそれほど増えない場合には今回の方法がオススメです。
+
+続きを読む
+🔗事前準備
+以前の記事を参考に、Amazonアカウント、Alexa開発用アカウントの作成を済ませておいて下さい。
+
+今回はAlexaがホストするサーバーにスキルを作成するので、LambdaやS3といったAWSリソースを作成する必要はありません。
+
+🔗Alexaスキルの設定
+🔗Alexaスキルの作成
+こちらからalexa developer console画面に移行して、「スキルの作成」をクリックして下さい。
+
+画像に alt 属性が指定されていません。ファイル名: スクリーンショット-2021-01-20-18.27.55-1024x319.png
+1,2,3,4の順で進めて下さい。
+
+「スキル名」は「スキルの公開名」や、「呼び出し名」ではなく、alexa developer console内でスキルを区別するための名前です。
+
+したがって、alexa developer console内で名前は一意である必要があります。
+
+画像に alt 属性が指定されていません。ファイル名: Alexa-Developer-Console-1024x987.png
+「スクラッチで作成」が選択されていることを確認し、「テンプレートで続ける」を選択して下さい。
+
+画像に alt 属性が指定されていません。ファイル名: スクリーンショット-2021-01-20-18.38.04-1024x338.png
+🔗「独自にプロビジョニングする」を選択した時に利用していたリソース
+🔗Lambda
+今回はLambdaでコードを管理しないで、「コードエディタ」でコードを管理します。
+
+画像に alt 属性が指定されていません。ファイル名: スクリーンショット-2021-01-20-18.48.20-1024x370.png
+🔗S3
+前回の様に、音声を利用したい場合には、Alexaが管理するS3を利用する必要があります。
+
+画像に alt 属性が指定されていません。ファイル名: スクリーンショット-2021-01-20-18.51.59-1024x353.png
+🔗コード作成
+今回は毎日の勉強時間を管理するスキルのコードをアップロードします。
+
+const Alexa = require('ask-sdk-core');
+const persistenceAdapter = require('ask-sdk-s3-persistence-adapter');
+const LaunchRequestHandler = {
+    canHandle(handlerInput) {
+        return Alexa.getRequestType(handlerInput.requestEnvelope) === 'LaunchRequest';
+    },
+    async handle(handlerInput) {
+
+        // 登録日
+        var today = new Date(); 
+        today = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0); 
+        // let today1 = today.toString();
+
+        let format = {
+            "登録日":{
+                "register":`Sun Aug 09 2020 00:00:00 GMT+0000 (Coordinated Universal Time)`
+            },
+            "達成数":{
+                "achievement":"0"
+            },
+            "ノルマ":{
+                "task":`0`
+            }
+        };
+        
+        // アトリビュートを読み込むハンドラー
+        const attributesManager = handlerInput.attributesManager;
+        let s3Attributes = await attributesManager.getPersistentAttributes() ;
+        
+        // 初回ログイン時のフォーマット作成
+        if(s3Attributes["達成数"] ){
+        }else{
+            s3Attributes = format;
+        }
+
+        // いつぶりのログインか計算
+        /* 今回ログイン日 */
+        today = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0); 
+        /* 登録日 */
+        var dateStart = new Date(s3Attributes["登録日"]["register"]);
+        /* いつ振りか表示 */
+        var msecDiff = today.getTime() - dateStart.getTime();
+        var dayDiff = Math.floor(msecDiff / 1000 / 60 / 60 / 24);
+        let dayDiff2 = (parseInt(dayDiff,10) * 3);
+
+        // アトリビュートを保存するハンドラー
+        s3Attributes["ノルマ"]["task"] = dayDiff2;
+        attributesManager.setPersistentAttributes(s3Attributes);
+        await attributesManager.savePersistentAttributes();
+
+        const speakOutput = "時間報告か目標管理どちらを開きますか？";
+
+        return handlerInput.responseBuilder
+            .speak(speakOutput)
+            .reprompt(speakOutput)
+            .getResponse();
+    }
+};
+const launchIntentHandler = {
+    canHandle(handlerInput) {
+        return Alexa.getRequestType(handlerInput.requestEnvelope) === 'IntentRequest'
+            && Alexa.getIntentName(handlerInput.requestEnvelope) === 'launchIntent';
+    },
+    handle(handlerInput) {
+        const speakOutput = "勉強時間報告か目標管理どちらを開きますか？";
+
+        return handlerInput.responseBuilder
+            .speak(speakOutput)
+            .reprompt(speakOutput)
+            .getResponse();
+    }
+};
+const studyIntentHandler = {
+    canHandle(handlerInput) {
+        return Alexa.getRequestType(handlerInput.requestEnvelope) === 'IntentRequest'
+            && Alexa.getIntentName(handlerInput.requestEnvelope) === 'studyIntent';
+    },
+    handle(handlerInput) {
+        const speakOutput = "何時間勉強しましたか？";
+
+        return handlerInput.responseBuilder
+            .speak(speakOutput)
+            .reprompt(speakOutput)
+            .getResponse();
+    }
+};
+const study_resultIntentHandler = {
+    canHandle(handlerInput) {
+        return Alexa.getRequestType(handlerInput.requestEnvelope) === 'IntentRequest'
+            && Alexa.getIntentName(handlerInput.requestEnvelope) === 'study_resultIntent';
+    },
+    async handle(handlerInput) {
+        
+        // 変数の設定
+        const slots = handlerInput.requestEnvelope.request.intent.slots;
+        let num = slots.num.value;
+        
+        // アトリビュートを読み込むハンドラー
+        const attributesManager = handlerInput.attributesManager;
+        let s3Attributes = await attributesManager.getPersistentAttributes();
+        let num2 = s3Attributes["達成数"]["achievement"];
+        
+        // アトリビュートを保存するハンドラー
+        s3Attributes["達成数"]["achievement"] = (parseInt(num,10)+parseInt(num2,10));
+        attributesManager.setPersistentAttributes(s3Attributes);
+        await attributesManager.savePersistentAttributes();
+        
+        
+        const speakOutput = "お疲れ様でした。";
+
+        return handlerInput.responseBuilder
+            .speak(speakOutput)
+            .reprompt(speakOutput)
+            .withShouldEndSession(true)
+            .getResponse();
+    }
+};
+const goalIntentHandler = {
+    canHandle(handlerInput) {
+        return Alexa.getRequestType(handlerInput.requestEnvelope) === 'IntentRequest'
+            && Alexa.getIntentName(handlerInput.requestEnvelope) === 'goalIntent';
+    },
+    async handle(handlerInput) {
+        
+        // アトリビュートを読み込むハンドラー
+        const attributesManager = handlerInput.attributesManager;
+        let s3Attributes = await attributesManager.getPersistentAttributes();
+        
+        // ノルマ計算
+        let achievement2 = s3Attributes["達成数"]["achievement"];
+        let task2 = s3Attributes["ノルマ"]["task"];
+        let penalty = (parseInt(task2,10)-parseInt(achievement2,10));
+        
+        if(penalty>0){
+        const speakOutput = `ノルマは${penalty}時間あります。`;
+        return handlerInput.responseBuilder
+            .speak(speakOutput)
+            .reprompt(speakOutput)
+            .withShouldEndSession(true)
+            .getResponse();
+        }
+        const speakOutput = "ノルマはないです";
+        return handlerInput.responseBuilder
+            .speak(speakOutput)
+            .reprompt(speakOutput)
+            .withShouldEndSession(true)
+            .getResponse();
+    }
+};
+const InitializationIntentHandler = {
+    canHandle(handlerInput) {
+        return Alexa.getRequestType(handlerInput.requestEnvelope) === 'IntentRequest'
+            && Alexa.getIntentName(handlerInput.requestEnvelope) === 'InitializationIntent';
+    },
+    async handle(handlerInput) {
+
+        // アトリビュートを読み込むハンドラー
+        const attributesManager = handlerInput.attributesManager;
+        let s3Attributes = await attributesManager.getPersistentAttributes();
+        
+        let init1 = s3Attributes["達成数"]["achievement"];
+        let init2 = (parseInt(init1,10)/0);
+        s3Attributes["達成数"]["achievement"] = init2;
+        
+        let init3 = s3Attributes["ノルマ"]["task"];
+        let init4 = (parseInt(init3,10)/0);
+        s3Attributes["ノルマ"]["task"] = init4;
+
+        // アトリビュートを保存するハンドラー
+        attributesManager.setPersistentAttributes(s3Attributes);
+        await attributesManager.savePersistentAttributes();
+
+
+        const speakOutput = "初期化しました";
+        return handlerInput.responseBuilder
+            .speak(speakOutput)
+            .reprompt(speakOutput)
+            .withShouldEndSession(true)
+            .getResponse();
+    }
+};
+const HelpIntentHandler = {
+    canHandle(handlerInput) {
+        return Alexa.getRequestType(handlerInput.requestEnvelope) === 'IntentRequest'
+            && Alexa.getIntentName(handlerInput.requestEnvelope) === 'AMAZON.HelpIntent';
+    },
+    handle(handlerInput) {
+        const speakOutput = ('勉強時間管理と言ってください');
+        return handlerInput.responseBuilder
+            .speak(speakOutput)
+            .reprompt(speakOutput)
+            .getResponse();
+    }
+};
+const CancelAndStopIntentHandler = {
+    canHandle(handlerInput) {
+        return Alexa.getRequestType(handlerInput.requestEnvelope) === 'IntentRequest'
+            && (Alexa.getIntentName(handlerInput.requestEnvelope) === 'AMAZON.CancelIntent'
+                || Alexa.getIntentName(handlerInput.requestEnvelope) === 'AMAZON.StopIntent');
+    },
+    handle(handlerInput) {
+        const speakOutput = ('またね');
+
+        return handlerInput.responseBuilder
+            .speak(speakOutput)
+            .getResponse();
+    }
+};
+const FallbackIntentHandler = {
+    canHandle(handlerInput) {
+        return Alexa.getRequestType(handlerInput.requestEnvelope) === 'IntentRequest'
+            && Alexa.getIntentName(handlerInput.requestEnvelope) === 'AMAZON.FallbackIntent';
+    },
+    handle(handlerInput) {
+        const speakOutput = ('FALLBACK_MSG');
+
+        return handlerInput.responseBuilder
+            .speak(speakOutput)
+            .reprompt(speakOutput)
+            .getResponse();
+    }
+};
+const SessionEndedRequestHandler = {
+    canHandle(handlerInput) {
+        return Alexa.getRequestType(handlerInput.requestEnvelope) === 'SessionEndedRequest';
+    },
+    handle(handlerInput) {
+        console.log(`~~~~ Session ended: ${JSON.stringify(handlerInput.requestEnvelope)}`);
+        // Any cleanup logic goes here.
+        return handlerInput.responseBuilder.getResponse(); // notice we send an empty response
+    }
+};
+const IntentReflectorHandler = {
+    canHandle(handlerInput) {
+        return Alexa.getRequestType(handlerInput.requestEnvelope) === 'IntentRequest';
+    },
+    handle(handlerInput) {
+        const intentName = Alexa.getIntentName(handlerInput.requestEnvelope);
+        const speakOutput = ('REFLECTOR_MSG', {intentName: intentName});
+
+        return handlerInput.responseBuilder
+            .speak(speakOutput)
+            //.reprompt('add a reprompt if you want to keep the session open for the user to respond')
+            .getResponse();
+    }
+};
+const ErrorHandler = {
+    canHandle() {
+        return true;
+    },
+    handle(handlerInput, error) {
+        const speakOutput = ('ERROR_MSG');
+        console.log(`~~~~ Error handled: ${JSON.stringify(error)}`);
+
+        return handlerInput.responseBuilder
+            .speak(speakOutput)
+            .reprompt(speakOutput)
+            .getResponse();
+    }
+};
+exports.handler = Alexa.SkillBuilders.custom()
+    .addRequestHandlers(
+        LaunchRequestHandler,
+        launchIntentHandler,
+        studyIntentHandler,
+        study_resultIntentHandler,
+        goalIntentHandler,
+        InitializationIntentHandler,
+        HelpIntentHandler,
+        CancelAndStopIntentHandler,
+        FallbackIntentHandler,
+        SessionEndedRequestHandler,
+        IntentReflectorHandler,
+    )
+    .addErrorHandlers(
+        ErrorHandler,
+    )
+     .withPersistenceAdapter(
+         new persistenceAdapter.S3PersistenceAdapter({bucketName:"変更する必要が有り"})
+     )
+    .lambda();
+
+
+- Lang Select -
+ファイル名
+data-line属性値
+コードの「変更する必要が有り」の部分を変更する必要があります。
+
+ここには自分のS3のフォルダ名を記入する必要があります。
+
+     .withPersistenceAdapter(
+         new persistenceAdapter.S3PersistenceAdapter({bucketName:"変更する必要が有り"})
+     )
+    .lambda();
+
+- Lang Select -
+ファイル名
+data-line属性値
+S3ストレージに移動します。
+
+画像に alt 属性が指定されていません。ファイル名: スクリーンショット-2021-01-20-19.06.58-1024x316.png
+1階層上のフォルダ名をコピーし、「変更する必要が有り」の所に貼り付けます。
+
+画像に alt 属性が指定されていません。ファイル名: スクリーンショット-2021-01-20-19.08.12-1024x207.png
+次に「package.json」をクリックし、以下コードを加えます。
+
+    "ask-sdk-s3-persistence-adapter": "^2.0.0"
+
+- Lang Select -
+ファイル名
+data-line属性値
+画像に alt 属性が指定されていません。ファイル名: スクリーンショット-2021-01-20-19.14.19-1024x335.png
+1,2の順でコードをアップロードして下さい。
+
+画像に alt 属性が指定されていません。ファイル名: スクリーンショット-2021-01-20-18.57.32-1024x411.png
+🔗テスト
+1,2,3の順で進み、スキルの呼び出し名を確認します。
+
+画像に alt 属性が指定されていません。ファイル名: スクリーンショット-2021-01-20-19.20.05-1024x371.png
+「テスト」をクリックし、デフォルトでは非公開となっているので、開発中に変更します。
+
+画像に alt 属性が指定されていません。ファイル名: スクリーンショット-2021-01-20-19.00.07-1024x240.png
+「呼び出し名」を開いてと入力するとスキルが起動しているのを確認することができます。
+
+画像に alt 属性が指定されていません。ファイル名: スクリーンショット-2021-01-20-19.22.17-1024x313.png
+まとめ
+独自にプロビジョニングする方法とは違い、AWSリソースを作成しないので、簡単に作成することができたかと思います。
+
+最初は「Alexaが保有するサーバー」で運用し、その後「独自にプロビジョニングする」方法に移行することができるので、気軽に作っていきたいと思います。
+
