@@ -1,0 +1,176 @@
+Alexa-hosted→ユーザー定義のプロビジョニングへの移行
+
+
+スキルを複数開発したので一元的に管理をしたい等いろいろな理由で、Alexa-hostedで管理していたスキルを、ユーザー定義のプロビジョニングに移行することがあるかと思います。
+
+今回はAlexa-hostedからユーザー定義のプロビジョニングへの移行方法についてまとめておきます。
+
+続きを読む
+🔗事前準備
+🔗Alexa-hostedスキル
+前回の記事を参考にAlexa-hostedスキルを作成しておいて下さい。
+
+🔗lambda
+以前の記事を参考にLambdaを作成しておいて下さい。
+
+AlexaにLambdaのARNを貼ったり、LambdaにAlexaのスキルIDを貼ったりといった作業は、この記事で行いますので、Lambdaの関数を作成しているだけで大丈夫です。
+
+コードは以下内容を貼り付け、デプロイするのを忘れないようにして下さい。
+
+const Alexa = require('ask-sdk-core');
+const LaunchRequestHandler = {
+    canHandle(handlerInput) {
+        return Alexa.getRequestType(handlerInput.requestEnvelope) === 'LaunchRequest';
+    },
+    handle(handlerInput) {
+
+
+        const speakOutput = "無事に設定変更できました";
+        return handlerInput.responseBuilder
+            .speak(speakOutput)
+            .reprompt(speakOutput)
+            .getResponse();
+    }
+};
+
+const HelpIntentHandler = {
+    canHandle(handlerInput) {
+        return Alexa.getRequestType(handlerInput.requestEnvelope) === 'IntentRequest'
+            && Alexa.getIntentName(handlerInput.requestEnvelope) === 'AMAZON.HelpIntent';
+    },
+    handle(handlerInput) {
+        const speakOutput = ('無事に設定変更できました');
+        return handlerInput.responseBuilder
+            .speak(speakOutput)
+            .reprompt(speakOutput)
+            .getResponse();
+    }
+};
+const CancelAndStopIntentHandler = {
+    canHandle(handlerInput) {
+        return Alexa.getRequestType(handlerInput.requestEnvelope) === 'IntentRequest'
+            && (Alexa.getIntentName(handlerInput.requestEnvelope) === 'AMAZON.CancelIntent'
+                || Alexa.getIntentName(handlerInput.requestEnvelope) === 'AMAZON.StopIntent');
+    },
+    handle(handlerInput) {
+        const speakOutput = ('またね');
+
+        return handlerInput.responseBuilder
+            .speak(speakOutput)
+            .getResponse();
+    }
+};
+const FallbackIntentHandler = {
+    canHandle(handlerInput) {
+        return Alexa.getRequestType(handlerInput.requestEnvelope) === 'IntentRequest'
+            && Alexa.getIntentName(handlerInput.requestEnvelope) === 'AMAZON.FallbackIntent';
+    },
+    handle(handlerInput) {
+        const speakOutput = ('FALLBACK_MSG');
+
+        return handlerInput.responseBuilder
+            .speak(speakOutput)
+            .reprompt(speakOutput)
+            .getResponse();
+    }
+};
+const SessionEndedRequestHandler = {
+    canHandle(handlerInput) {
+        return Alexa.getRequestType(handlerInput.requestEnvelope) === 'SessionEndedRequest';
+    },
+    handle(handlerInput) {
+        console.log(`~~~~ Session ended: ${JSON.stringify(handlerInput.requestEnvelope)}`);
+        // Any cleanup logic goes here.
+        return handlerInput.responseBuilder.getResponse(); // notice we send an empty response
+    }
+};
+const IntentReflectorHandler = {
+    canHandle(handlerInput) {
+        return Alexa.getRequestType(handlerInput.requestEnvelope) === 'IntentRequest';
+    },
+    handle(handlerInput) {
+        const intentName = Alexa.getIntentName(handlerInput.requestEnvelope);
+        const speakOutput = ('REFLECTOR_MSG', {intentName: intentName});
+
+        return handlerInput.responseBuilder
+            .speak(speakOutput)
+            //.reprompt('add a reprompt if you want to keep the session open for the user to respond')
+            .getResponse();
+    }
+};
+const ErrorHandler = {
+    canHandle() {
+        return true;
+    },
+    handle(handlerInput, error) {
+        const speakOutput = ('ERROR_MSG');
+        console.log(`~~~~ Error handled: ${JSON.stringify(error)}`);
+
+        return handlerInput.responseBuilder
+            .speak(speakOutput)
+            .reprompt(speakOutput)
+            .getResponse();
+    }
+};
+exports.handler = Alexa.SkillBuilders.custom()
+    .addRequestHandlers(
+        LaunchRequestHandler,
+        HelpIntentHandler,
+        CancelAndStopIntentHandler,
+        FallbackIntentHandler,
+        SessionEndedRequestHandler,
+        IntentReflectorHandler,
+    )
+    .addErrorHandlers(
+        ErrorHandler,
+    )
+     .withPersistenceAdapter(
+     )
+    .lambda();
+
+- Lang Select -
+ファイル名
+data-line属性値
+🔗移行作業
+事前準備で作成しておいたスキルをクリックし、1,2の順で進みます。
+
+画像に alt 属性が指定されていません。ファイル名: スクリーンショット-2021-01-21-18.10.31-1024x343.png
+以前の記事で行ったLambdaにAlexaスキルのスキルIDを登録、AlexaにLambdaのARNの登録をしていきます。
+
+AlexaのスキルIDをコピーします。
+
+画像に alt 属性が指定されていません。ファイル名: スクリーンショット-2021-01-21-18.21.36-1024x479.png
+事前準備しておいたLmbdaダッシュボードに進み、1でトリガーを削除し、2に進みます。
+
+画像に alt 属性が指定されていません。ファイル名: スクリーンショット-2021-01-21-18.38.26-1024x540.png
+1でAlexa Skills Kitを選択し、2でコピーしておいたAlexaのスキルIDを入力します。
+
+画像に alt 属性が指定されていません。ファイル名: スクリーンショット-2021-01-21-18.40.48-1024x717.png
+LambdaのダッシュボードにあるARNをコピーします。
+
+画像に alt 属性が指定されていません。ファイル名: スクリーンショット-2021-01-21-18.44.52-1024x369.png
+次にAlexaのダッシュボードに戻り、「デフォルトの地域」にLambdaのARNを貼り付け、「エンドポイントを保存」をクリックします。
+
+画像に alt 属性が指定されていません。ファイル名: スクリーンショット-2021-01-21-18.48.07-1-1024x490.png
+すると、この変更をすることで「Alexa-hosted」ではなくなるよという警告文が出てきます。
+
+これは正常な流れなのでContinueをクリックします。
+
+画像に alt 属性が指定されていません。ファイル名: スクリーンショット-2021-01-21-18.51.17-1024x292.png
+以上でAlexa-hostedからユーザー定義のプロビジョニングへの移行は終了です。
+
+サービスに影響がないか確認していきます。
+
+まずは、コードエディタに進むと以下の様に、Alexa-hostedではなくなったことが確認できます。
+
+画像に alt 属性が指定されていません。ファイル名: スクリーンショット-2021-01-21-18.55.40-1024x252.png
+テストをすることで、作成したLambdaにデプロイしたコードが動いていることが確認できます。
+
+画像に alt 属性が指定されていません。ファイル名: スクリーンショット-2021-01-21-19.05.20-1024x315.png
+まとめ
+簡単に設定することができました。
+
+AWSアカウントを作成するのが面倒なので、Alexa-hostedを利用している方もいらっしゃるかと思います。
+
+今回の作業をするにはAWSアカウントが必要になるので、こちらを参考に作成して下さい。
+
