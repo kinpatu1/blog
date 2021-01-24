@@ -1,0 +1,281 @@
+Alexa開発時のデバッグ方法について
+
+Alexa開発ではデバッグするのも簡単にできる様になっております。
+
+普段アプリ開発や、コードを書くことがないので、デバッグ方法について詳しくありませんでした。
+
+Alexa開発におけるデバッグに関してはある程度把握できたかと思うので、ここにまとめておきます。
+
+続きを読む
+事前準備
+以前の記事を参考に「ユーザー定義のプロビジョニング」、「Alexa-hosted」を作成しておいて下さい。
+
+呼び出し名はそれぞれ被らない様にblog一、blog二の様に分けておいて下さい。
+
+コードに関しては両方とも以下のものを利用して下さい。
+
+エラーが出る様に書いています。
+
+const Alexa = require('ask-sdk-core');
+const LaunchRequestHandler = {
+    canHandle(handlerInput) {
+        return Alexa.getRequestType(handlerInput.requestEnvelope) === 'LaunchRequest';
+    },
+    handle(handlerInput) {
+        const test1 = "エラー解消";
+        test1 = "エラーが解消されました";
+
+        const speakOutput = "${test1}";
+        return handlerInput.responseBuilder
+            .speak(speakOutput)
+            .reprompt(speakOutput)
+            .getResponse();
+    }
+};
+
+const HelpIntentHandler = {
+    canHandle(handlerInput) {
+        return Alexa.getRequestType(handlerInput.requestEnvelope) === 'IntentRequest'
+            && Alexa.getIntentName(handlerInput.requestEnvelope) === 'AMAZON.HelpIntent';
+    },
+    handle(handlerInput) {
+        const speakOutput = ('無事に設定変更できました');
+        return handlerInput.responseBuilder
+            .speak(speakOutput)
+            .reprompt(speakOutput)
+            .getResponse();
+    }
+};
+const CancelAndStopIntentHandler = {
+    canHandle(handlerInput) {
+        return Alexa.getRequestType(handlerInput.requestEnvelope) === 'IntentRequest'
+            && (Alexa.getIntentName(handlerInput.requestEnvelope) === 'AMAZON.CancelIntent'
+                || Alexa.getIntentName(handlerInput.requestEnvelope) === 'AMAZON.StopIntent');
+    },
+    handle(handlerInput) {
+        const speakOutput = ('またね');
+
+        return handlerInput.responseBuilder
+            .speak(speakOutput)
+            .getResponse();
+    }
+};
+const FallbackIntentHandler = {
+    canHandle(handlerInput) {
+        return Alexa.getRequestType(handlerInput.requestEnvelope) === 'IntentRequest'
+            && Alexa.getIntentName(handlerInput.requestEnvelope) === 'AMAZON.FallbackIntent';
+    },
+    handle(handlerInput) {
+        const speakOutput = ('FALLBACK_MSG');
+
+        return handlerInput.responseBuilder
+            .speak(speakOutput)
+            .reprompt(speakOutput)
+            .getResponse();
+    }
+};
+const SessionEndedRequestHandler = {
+    canHandle(handlerInput) {
+        return Alexa.getRequestType(handlerInput.requestEnvelope) === 'SessionEndedRequest';
+    },
+    handle(handlerInput) {
+        console.log(`~~~~ Session ended: ${JSON.stringify(handlerInput.requestEnvelope)}`);
+        // Any cleanup logic goes here.
+        return handlerInput.responseBuilder.getResponse(); // notice we send an empty response
+    }
+};
+const IntentReflectorHandler = {
+    canHandle(handlerInput) {
+        return Alexa.getRequestType(handlerInput.requestEnvelope) === 'IntentRequest';
+    },
+    handle(handlerInput) {
+        const intentName = Alexa.getIntentName(handlerInput.requestEnvelope);
+        const speakOutput = ('REFLECTOR_MSG', {intentName: intentName});
+
+        return handlerInput.responseBuilder
+            .speak(speakOutput)
+            //.reprompt('add a reprompt if you want to keep the session open for the user to respond')
+            .getResponse();
+    }
+};
+const ErrorHandler = {
+    canHandle() {
+        return true;
+    },
+    handle(handlerInput, error) {
+        const speakOutput = ('ERROR_MSG');
+        console.log(`~~~~ Error handled: ${JSON.stringify(error)}`);
+
+        return handlerInput.responseBuilder
+            .speak(speakOutput)
+            .reprompt(speakOutput)
+            .getResponse();
+    }
+};
+exports.handler = Alexa.SkillBuilders.custom()
+    .addRequestHandlers(
+        <!-- LaunchRequestHandler, -->
+        HelpIntentHandler,
+        CancelAndStopIntentHandler,
+        FallbackIntentHandler,
+        SessionEndedRequestHandler,
+        IntentReflectorHandler,
+    )
+    .addErrorHandlers(
+        ErrorHandler,
+    )
+     .withPersistenceAdapter(
+     )
+    .lambda();
+
+- Lang Select -
+ファイル名
+data-line属性値
+エラー時の挙動確認
+スキルを呼び出すと以下の様なメッセージが表示されます。
+
+画像に alt 属性が指定されていません。ファイル名: スクリーンショット-2021-01-22-14.45.35-1024x380.png
+これはAlexaからのリクエストをLambdaのコード内にあるErrorHandlerが処理しているためです。
+
+他のハンドラーに条件が合わなかった場合、ErrorHandlerが処理する様に書かれています。
+
+分かりやすい様にErrorHandlerが処理される時に、Alexaが発話する内容を変えておきます。
+
+画像に alt 属性が指定されていません。ファイル名: スクリーンショット-2021-01-22-14.49.43-1024x420.png
+        const speakOutput = ('ERROR_MSG');
+　　　　　　　　　　　↓
+        const speakOutput = ('エラーが起きました、コードを修正して下さい。');
+
+- Lang Select -
+ファイル名
+data-line属性値
+Lambdaダッシュボードで確認できるエラー
+エラーが発生していることは分かりました。これからエラーの原因を探していきます。
+
+Lambdaのダッシュボードにいき、コードの下の方までスクロールすると❌印がついているのが分かります。
+
+コード内で定義したHandlerは、exports.handlerでも定義する必要があります。
+
+今回はエラーが出る様に「exports.handler」の中の一文をコメントアウトしておきました。
+
+画像に alt 属性が指定されていません。ファイル名: スクリーンショット-2021-01-22-14.58.58-1024x467.png
+コメントアウトを直した正しい「exports.handler」の中身は以下になります。
+
+exports.handler = Alexa.SkillBuilders.custom()
+    .addRequestHandlers(
+        LaunchRequestHandler,
+        HelpIntentHandler,
+        CancelAndStopIntentHandler,
+        FallbackIntentHandler,
+        SessionEndedRequestHandler,
+        IntentReflectorHandler,
+    )
+
+- Lang Select -
+ファイル名
+data-line属性値
+次に、「index.js」の中身を見ると7行目に「i」が表示されているのが確認できます。
+
+「i」の所にカーソルを合わせると、エラーの原因が表示されます。
+
+今回の場合、定義した変数が使われていないというものでした。
+
+「speakOutput」の中で、使っていると思ったのですが、変数は`(バッククオーテーション)で囲う必要がある様です。
+
+画像に alt 属性が指定されていません。ファイル名: スクリーンショット-2021-01-22-15.12.57-1024x414.png
+コードを以下の様に変更します。
+
+        const speakOutput = "${test1}";
+　　　　　　　　　　　↓
+        const speakOutput = `${test1}`;
+
+- Lang Select -
+ファイル名
+data-line属性値
+Lambdaダッシュボードで確認できるエラーは、簡単にエラー箇所を特定することができました。
+
+それ以外の時のエラー
+Lambdaダッシュボードで確認できるエラーはなくすことができましたが、テストを実施すると現在もエラーが発生しているのが確認できます。
+
+画像に alt 属性が指定されていません。ファイル名: スクリーンショット-2021-01-22-15.53.41-1024x392.png
+よって、別の方法でエラー箇所を探していきます。
+
+Lambdaのダッシュボードで1、2の順でクリックします
+
+画像に alt 属性が指定されていません。ファイル名: スクリーンショット-2021-01-22-16.28.25-1-1024x447.png
+Alexaを呼び出した時間に新しくログストリームが作成されているのでクリックします。
+
+画像に alt 属性が指定されていません。ファイル名: スクリーンショット-2021-01-22-16.31.37-1024x587.png
+エラーが発生しているログを特定してクリックします。
+
+コードの中で何行目が原因か書かれていることもありますが、今回は書かれていない様です。
+
+画像に alt 属性が指定されていません。ファイル名: スクリーンショット-2021-01-22-17.06.51-1024x475.png
+他の方法でエラーの原因を特定します。
+
+Alexaのダッシュボードに戻り、JSON入力をコピーします。
+
+画像に alt 属性が指定されていません。ファイル名: スクリーンショット-2021-01-22-17.10.38-1024x523.png
+「テストイベントの設定」をクリックします。
+
+画像に alt 属性が指定されていません。ファイル名: スクリーンショット-2021-01-22-17.12.24-1024x194.png
+1でイベント名を入力し、2にコピーしておいたJSON入力を貼ります。
+
+画像に alt 属性が指定されていません。ファイル名: スクリーンショット-2021-01-22-17.14.09-939x1024.png
+テストをクリックすると、Alexaから受け取ったJSON入力に対するLambdaの反応を見ることができます。
+
+CloudWatchの時と同様、今回のエラーに関することは書かれていませんでした。
+
+画像に alt 属性が指定されていません。ファイル名: スクリーンショット-2021-01-22-17.17.06-1024x500.png
+こんな時はコードのどこでエラーが発生しているのか、しらみつぶししていくしかありません。
+
+今回はAlexaを呼び出した時にエラーが発生しているので、「LaunchRequestHandler」を疑います。
+
+変数を利用しているのでこれが正しいのか確認します。
+
+コード内に以下コマンドを追加しデプロイします。
+
+console.logは変数を表示させることができるコマンドです。
+
+        console.log(test1);
+
+- Lang Select -
+ファイル名
+data-line属性値
+テストを実施すると先程と変わっていないのが確認できます。
+
+test1が正常であれば、変数が表示されるはずなので、この辺りが怪しいのを疑います。
+
+コードをよく見るとconstで定義した変数に、新しい値を代入しています。
+
+こちらがエラーの原因の可能性が高いです。
+
+画像に alt 属性が指定されていません。ファイル名: スクリーンショット-2021-01-22-17.26.47-1024x488.png
+LaunchRequestHandler内のコードを以下の様に変更し、再度デプロイします。
+
+        const test1 = "エラー解消";
+　　　　　　　　　　　↓
+        let test1 = "エラー解消";
+
+- Lang Select -
+ファイル名
+data-line属性値
+再度テストを実施します。
+
+変数の中身である「エラーが解消されました」が表示されているのが確認できます。
+
+画像に alt 属性が指定されていません。ファイル名: スクリーンショット-2021-01-22-17.38.04-1024x461.png
+最後にAlexaのダッシュボードに戻り、テストを実施するとスキルが問題なく動作していることが確認できます。
+
+まとめ
+上記の方法でデバッグできますが、コードを変更するたびに動作確認するのがベストプラクティクスかと思います。
+
+今回のエラーの原因はコード内で、❌印、「i」を探すこと、CloudWatch、テストイベントを利用することで特定できました。
+
+Alexa-hostedを利用する場合は以下の様に違いがある様です。
+・❌印が表示される条件が違う（exports.handlerにエラー原因があることは分からないが、
+　変数の定義方法にエラー原因があることは分かる）
+・テストイベントを利用できない
+
+記事内には書きませんでしたが、興味があれば確認しておいて下さい。
+
