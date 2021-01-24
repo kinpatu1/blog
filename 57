@@ -1,0 +1,161 @@
+スキルを公開しないでプライベートに利用する方法
+
+
+家族や組織だけで利用したいスキルで、公開はしたくないといったものもあるかと思います。
+
+今回は公開しないでスキルを利用する方法についてまとめました。
+
+続きを読む
+事前準備
+同一のAmazonアカウントで作成した以下2つのアカウントを用意しておいて下さい。
+
+alexa developer consoleでアカウントを作成する際は、設定まで済ませておいて下さい。
+
+Amazon Alexa ( App Store 、 Google Play )
+alexa developer console
+また、利用するAlexa端末に関しても同一のアカウントでログインしている必要があります。
+
+利用するコード
+以前の記事を参考にAlexaがホストするサーバーを作成して下さい。
+
+コードは以下のものを利用して下さい。
+
+const Alexa = require('ask-sdk-core');
+const LaunchRequestHandler = {
+    canHandle(handlerInput) {
+        return Alexa.getRequestType(handlerInput.requestEnvelope) === 'LaunchRequest';
+    },
+    handle(handlerInput) {
+        const test1 = "blog用のテストになります";
+
+        const speakOutput = `${test1}`;
+        return handlerInput.responseBuilder
+            .speak(speakOutput)
+            .reprompt(speakOutput)
+            .getResponse();
+    }
+};
+
+const HelpIntentHandler = {
+    canHandle(handlerInput) {
+        return Alexa.getRequestType(handlerInput.requestEnvelope) === 'IntentRequest'
+            && Alexa.getIntentName(handlerInput.requestEnvelope) === 'AMAZON.HelpIntent';
+    },
+    handle(handlerInput) {
+        const speakOutput = ('お困りですか？');
+        return handlerInput.responseBuilder
+            .speak(speakOutput)
+            .reprompt(speakOutput)
+            .getResponse();
+    }
+};
+const CancelAndStopIntentHandler = {
+    canHandle(handlerInput) {
+        return Alexa.getRequestType(handlerInput.requestEnvelope) === 'IntentRequest'
+            && (Alexa.getIntentName(handlerInput.requestEnvelope) === 'AMAZON.CancelIntent'
+                || Alexa.getIntentName(handlerInput.requestEnvelope) === 'AMAZON.StopIntent');
+    },
+    handle(handlerInput) {
+        const speakOutput = ('またね');
+
+        return handlerInput.responseBuilder
+            .speak(speakOutput)
+            .getResponse();
+    }
+};
+const FallbackIntentHandler = {
+    canHandle(handlerInput) {
+        return Alexa.getRequestType(handlerInput.requestEnvelope) === 'IntentRequest'
+            && Alexa.getIntentName(handlerInput.requestEnvelope) === 'AMAZON.FallbackIntent';
+    },
+    handle(handlerInput) {
+        const speakOutput = ('FALLBACK_MSG');
+
+        return handlerInput.responseBuilder
+            .speak(speakOutput)
+            .reprompt(speakOutput)
+            .getResponse();
+    }
+};
+const SessionEndedRequestHandler = {
+    canHandle(handlerInput) {
+        return Alexa.getRequestType(handlerInput.requestEnvelope) === 'SessionEndedRequest';
+    },
+    handle(handlerInput) {
+        console.log(`~~~~ Session ended: ${JSON.stringify(handlerInput.requestEnvelope)}`);
+        // Any cleanup logic goes here.
+        return handlerInput.responseBuilder.getResponse(); // notice we send an empty response
+    }
+};
+const IntentReflectorHandler = {
+    canHandle(handlerInput) {
+        return Alexa.getRequestType(handlerInput.requestEnvelope) === 'IntentRequest';
+    },
+    handle(handlerInput) {
+        const intentName = Alexa.getIntentName(handlerInput.requestEnvelope);
+        const speakOutput = ('REFLECTOR_MSG', {intentName: intentName});
+
+        return handlerInput.responseBuilder
+            .speak(speakOutput)
+            //.reprompt('add a reprompt if you want to keep the session open for the user to respond')
+            .getResponse();
+    }
+};
+const ErrorHandler = {
+    canHandle() {
+        return true;
+    },
+    handle(handlerInput, error) {
+        const speakOutput = ('ERROR_MSG');
+        console.log(`~~~~ Error handled: ${JSON.stringify(error)}`);
+
+        return handlerInput.responseBuilder
+            .speak(speakOutput)
+            .reprompt(speakOutput)
+            .getResponse();
+    }
+};
+exports.handler = Alexa.SkillBuilders.custom()
+    .addRequestHandlers(
+        LaunchRequestHandler,
+        HelpIntentHandler,
+        CancelAndStopIntentHandler,
+        FallbackIntentHandler,
+        SessionEndedRequestHandler,
+        IntentReflectorHandler,
+    )
+    .addErrorHandlers(
+        ErrorHandler,
+    )
+     .withPersistenceAdapter(
+     )
+    .lambda();
+
+- Lang Select -
+ファイル名
+data-line属性値
+公開しないでスキルを利用する方法
+上記コードを利用して、今回はblogという名前のスキルを作成しました。
+
+画像に alt 属性が指定されていません。ファイル名: スクリーンショット-2021-01-24-21.58.38-1024x466.png
+Amazon Alexaから「スキル」>「有効なスキル」をクリックします。
+
+画像に alt 属性が指定されていません。ファイル名: スクリーンショット-2021-01-24-21.55.46-1-1024x394.png
+「開発スキル」をクリックすると、先程作成したスキルがあるのが確認できます。
+
+画像に alt 属性が指定されていません。ファイル名: スクリーンショット-2021-01-24-21.56.28-1024x354.png
+是非、現在利用しているAlexa端末でスキルを呼び出してみて下さい。スキルが利用できるのが確認できます。
+
+
+YouTube URL
+サイトに表示したいコンテンツのリンクを貼り付けます。
+https://youtu.be/HN72cz5mAaY
+埋め込み
+埋め込みについてさらに詳しく(新しいタブで開く)
+このコンテンツを埋め込めませんでした。
+再試行 リンクへ変換
+まとめ
+公開申請するのが面倒な時や、公開したくないスキルは是非今回の方法を試してみて下さい。
+
+しかし、再三になりますが同一のアカウントで、今回利用するアカウントを作成している必要があります。
+
