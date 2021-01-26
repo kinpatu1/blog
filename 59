@@ -1,0 +1,178 @@
+公開後にAlexaスキルのコードを編集する方法
+
+
+前回の記事で公開後に簡単にスキルを編集できることが分かりました。
+
+しかし、Lambdaのコードを編集すると公開中、開発中の両方に反映されてしまうので、スキルを利用しているユーザーに影響が出てしまいます。
+
+今回は新しく開発中のLambdaを作成し、開発中のスキルと紐つけていきます。
+
+続きを読む
+🔗やりたいこと
+画像に alt 属性が指定されていません。ファイル名: Untitled-Diagram-8-1024x525.png
+🔗事前準備
+以前の記事を参考に「ユーザー定義のプロビジョニング」を作成しておいて下さい。
+
+コードに関しては以下のものを利用して下さい。
+
+const Alexa = require('ask-sdk-core');
+const LaunchRequestHandler = {
+    canHandle(handlerInput) {
+        return Alexa.getRequestType(handlerInput.requestEnvelope) === 'LaunchRequest';
+    },
+    handle(handlerInput) {
+        const test1 = "エンドポイント1のラムダです";
+
+        const speakOutput = `${test1}`;
+        return handlerInput.responseBuilder
+            .speak(speakOutput)
+            .reprompt(speakOutput)
+            .getResponse();
+    }
+};
+
+const HelpIntentHandler = {
+    canHandle(handlerInput) {
+        return Alexa.getRequestType(handlerInput.requestEnvelope) === 'IntentRequest'
+            && Alexa.getIntentName(handlerInput.requestEnvelope) === 'AMAZON.HelpIntent';
+    },
+    handle(handlerInput) {
+        const speakOutput = ('お困りですか？');
+        return handlerInput.responseBuilder
+            .speak(speakOutput)
+            .reprompt(speakOutput)
+            .getResponse();
+    }
+};
+const CancelAndStopIntentHandler = {
+    canHandle(handlerInput) {
+        return Alexa.getRequestType(handlerInput.requestEnvelope) === 'IntentRequest'
+            && (Alexa.getIntentName(handlerInput.requestEnvelope) === 'AMAZON.CancelIntent'
+                || Alexa.getIntentName(handlerInput.requestEnvelope) === 'AMAZON.StopIntent');
+    },
+    handle(handlerInput) {
+        const speakOutput = ('またね');
+
+        return handlerInput.responseBuilder
+            .speak(speakOutput)
+            .getResponse();
+    }
+};
+const FallbackIntentHandler = {
+    canHandle(handlerInput) {
+        return Alexa.getRequestType(handlerInput.requestEnvelope) === 'IntentRequest'
+            && Alexa.getIntentName(handlerInput.requestEnvelope) === 'AMAZON.FallbackIntent';
+    },
+    handle(handlerInput) {
+        const speakOutput = ('FALLBACK_MSG');
+
+        return handlerInput.responseBuilder
+            .speak(speakOutput)
+            .reprompt(speakOutput)
+            .getResponse();
+    }
+};
+const SessionEndedRequestHandler = {
+    canHandle(handlerInput) {
+        return Alexa.getRequestType(handlerInput.requestEnvelope) === 'SessionEndedRequest';
+    },
+    handle(handlerInput) {
+        console.log(`~~~~ Session ended: ${JSON.stringify(handlerInput.requestEnvelope)}`);
+        // Any cleanup logic goes here.
+        return handlerInput.responseBuilder.getResponse(); // notice we send an empty response
+    }
+};
+const IntentReflectorHandler = {
+    canHandle(handlerInput) {
+        return Alexa.getRequestType(handlerInput.requestEnvelope) === 'IntentRequest';
+    },
+    handle(handlerInput) {
+        const intentName = Alexa.getIntentName(handlerInput.requestEnvelope);
+        const speakOutput = ('REFLECTOR_MSG', {intentName: intentName});
+
+        return handlerInput.responseBuilder
+            .speak(speakOutput)
+            //.reprompt('add a reprompt if you want to keep the session open for the user to respond')
+            .getResponse();
+    }
+};
+const ErrorHandler = {
+    canHandle() {
+        return true;
+    },
+    handle(handlerInput, error) {
+        const speakOutput = ('ERROR_MSG');
+        console.log(`~~~~ Error handled: ${JSON.stringify(error)}`);
+
+        return handlerInput.responseBuilder
+            .speak(speakOutput)
+            .reprompt(speakOutput)
+            .getResponse();
+    }
+};
+exports.handler = Alexa.SkillBuilders.custom()
+    .addRequestHandlers(
+        LaunchRequestHandler,
+        HelpIntentHandler,
+        CancelAndStopIntentHandler,
+        FallbackIntentHandler,
+        SessionEndedRequestHandler,
+        IntentReflectorHandler,
+    )
+    .addErrorHandlers(
+        ErrorHandler,
+    )
+     .withPersistenceAdapter(
+     )
+    .lambda();
+
+- Lang Select -
+ファイル名
+data-line属性値
+🔗Lambdaの複製
+Lambdaのダッシュボードで作成した関数をクリックし「アクション」>「関数のエクスポート 」を実施します。
+
+画像に alt 属性が指定されていません。ファイル名: スクリーンショット-2021-01-26-8.05.48-1024x370.png
+「デプロイパッケージのダウンロード」をクリックします。
+
+画像に alt 属性が指定されていません。ファイル名: スクリーンショット-2021-01-26-8.07.41-1024x330.png
+新しく関数を作成します。
+
+画像に alt 属性が指定されていません。ファイル名: スクリーンショット-2021-01-26-8.09.26-1024x272.png
+1、2の順でクリックします。
+
+画像に alt 属性が指定されていません。ファイル名: スクリーンショット-2021-01-26-8.11.16-1024x493.png
+次の画面で「アプリケーション名」を入力しデプロイします。
+
+新しく作成したLambda関数から「アクション」>「.zip ファイルをアップロード」をクリックします。
+
+画像に alt 属性が指定されていません。ファイル名: スクリーンショット-2021-01-26-8.15.25-1024x585.png
+アップロード画面が表示されるので、先程ダウンロードしたzipファイルをアップロードします。
+
+コードは分かりやすい様に「LaunchRequestHandler」の中身を以下の様に変えておきます。
+
+const LaunchRequestHandler = {
+    canHandle(handlerInput) {
+        return Alexa.getRequestType(handlerInput.requestEnvelope) === 'LaunchRequest';
+    },
+    handle(handlerInput) {
+        const test1 = "エンドポイント2のラムダです";
+
+        const speakOutput = `${test1}`;
+        return handlerInput.responseBuilder
+            .speak(speakOutput)
+            .reprompt(speakOutput)
+            .getResponse();
+    }
+};
+
+- Lang Select -
+ファイル名
+data-line属性値
+🔗LambdaとAlexaスキルとの紐付け
+以前の記事を参考にLambdaとAlexaスキルとの紐付けを行って下さい。
+
+
+まとめ
+Lambda関数をダウンロードする方法以外は、今までに扱ってきた内容なので簡単に設定できました。
+
